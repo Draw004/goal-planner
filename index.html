@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Goal Planner | Carrowmont</title>
+  <meta name="description" content="Plan education, a home, wedding, travel, vehicle, emergency savings or another future goal. Estimate future cost, funding gap and monthly savings needed." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://carrowmont.com/goal-planner/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta property="og:site_name" content="Carrowmont" />
+  <meta property="og:title" content="Goal Planner | Carrowmont" />
+  <meta property="og:description" content="Turn a future financial goal into clearer assumptions about cost, timing and savings." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://carrowmont.com/goal-planner/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="theme-color" content="#0e827a" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont Goal Planner","url":"https://carrowmont.com/goal-planner/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational goal-planning calculator for modelling future goal costs, savings progress and monthly funding needs."}</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="brand-cluster">
+      <a class="brand" href="/" aria-label="Carrowmont home">CARROWMONT</a>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="product-label">Goal Planner</span>
+    </div>
+    <div class="header-actions">
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a href="#planner">Planner</a>
+        <a href="#how">How it works</a>
+        <a href="#methodology">Methodology</a>
+        <a href="/#tools">All tools</a>
+        <a href="/">Home</a>
+      </nav>
+      <details class="locale-menu" id="localeMenu">
+        <summary id="localeSummary" aria-label="Choose country and currency"><span class="locale-globe" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4.5 6 4.5 9S15 18 12 21c-3-3-4.5-6-4.5-9S9 6 12 3z"/></svg></span><span id="localeCurrent">India · INR</span><span class="locale-chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 9 5 5 5-5"/></svg></span></summary>
+        <div class="locale-popover">
+          <h3>Country & currency</h3>
+          <p>Choose the context that makes the numbers easiest to understand.</p>
+          <label>Country / region
+            <select id="regionSelect"></select>
+          </label>
+          <label>Currency
+            <select id="currencySelect"></select>
+          </label>
+          <div class="locale-note"><strong>Important:</strong> changing currency changes the unit and number format. It does not convert entered amounts using an exchange rate.</div>
+          <button class="btn btn-primary btn-small" id="localeDone" type="button">Done</button>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="intro">
+  <div class="container intro-grid">
+    <div>
+      <div class="eyebrow">PLAN A GOAL</div>
+      <h1>Turn a future goal into a clear savings plan.</h1>
+      <p class="lede">Choose what you are planning for, estimate what it may cost in the future, and see how your current savings plan compares.</p>
+      <div class="chips">
+        <span>Goal-specific assumptions</span><span>Scenario comparison</span><span>Country-aware currencies</span>
+      </div>
+    </div>
+    <div class="intro-card">
+      <div class="eyebrow">HOW IT WORKS</div>
+      <div class="mini-flow"><strong>Today’s cost</strong><span>→</span><strong>Future goal cost</strong><span>→</span><strong>Savings needed</strong></div>
+      <p>Carrowmont separates inflation from investment growth so you can see which assumption is driving the result.</p>
+    </div>
+  </div>
+</section>
+
+<section class="planner-shell" id="planner">
+  <div class="container planner-grid">
+    <section class="planner-card">
+      <div class="section-head"><div><div class="eyebrow">YOUR GOAL</div><h2>Build the assumptions</h2></div><button class="text-btn" id="resetBtn" type="button">Reset</button></div>
+
+      <div class="step">
+        <div class="step-title"><span>1</span><div><h3>What are you planning for?</h3><p>Choose a template. You can still edit every assumption.</p></div></div>
+        <div class="goal-types" id="goalTypes"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-title"><span>2</span><div><h3>Goal details</h3><p id="goalHelp">Enter the amount in today’s money and when you want to reach the goal.</p></div></div>
+        <div class="fields" id="goalDetailFields">
+          <label class="field"><span>Goal name</span><input id="goalName" type="text" value="Higher education" maxlength="60" /></label>
+          <label class="field"><span>Years until goal</span><div class="input-suffix"><input id="years" type="number" min="1" max="50" step="1" value="12" /><span>yrs</span></div></label>
+          <label class="field dynamic-standard"><span id="amountLabel">Cost in today’s money</span><div class="money-input"><span class="currency-prefix">₹</span><input id="amountToday" type="number" min="0" step="1000" value="2500000" /></div><small id="amountHelp">Enter what the goal would cost if paid for today.</small></label>
+          <label class="field dynamic-home hidden"><span>Property value in today’s money</span><div class="money-input"><span class="currency-prefix">₹</span><input id="propertyValue" type="number" min="0" step="1000" value="8000000" /></div></label>
+          <label class="field dynamic-home hidden"><span>Down payment target</span><div class="input-suffix"><input id="downPayment" type="number" min="1" max="100" step="1" value="20" /><span>%</span></div><small>The planner models the down payment, not the full property purchase.</small></label>
+          <label class="field dynamic-emergency hidden"><span>Essential monthly expenses</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlyExpenses" type="number" min="0" step="1000" value="75000" /></div></label>
+          <label class="field dynamic-emergency hidden"><span>Emergency-fund target</span><div class="input-suffix"><input id="expenseMonths" type="number" min="1" max="36" step="1" value="6" /><span>months</span></div></label>
+          <label class="field"><span id="inflationLabel">Education inflation assumption</span><div class="input-suffix"><input id="inflationRate" type="number" min="0" max="30" step="0.1" value="7" /><span>%</span></div><small>This is an editable assumption, not a forecast.</small></label>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-title"><span>3</span><div><h3>Savings & investment assumptions</h3><p>These determine what your current plan may grow to by the goal date.</p></div></div>
+        <div class="fields">
+          <label class="field"><span>Existing savings for this goal</span><div class="money-input"><span class="currency-prefix">₹</span><input id="existingSavings" type="number" min="0" step="1000" value="500000" /></div></label>
+          <label class="field"><span>Current monthly contribution</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlyContribution" type="number" min="0" step="500" value="8000" /></div></label>
+          <label class="field"><span>Expected annual investment return</span><div class="input-suffix"><input id="returnRate" type="number" min="0" max="30" step="0.1" value="10" /><span>%</span></div><small>Used as a constant modelling assumption.</small></label>
+          <label class="field"><span>Optional future lump sum</span><div class="money-input"><span class="currency-prefix">₹</span><input id="futureLump" type="number" min="0" step="1000" value="0" /></div></label>
+          <label class="field"><span>Years until that lump sum</span><div class="input-suffix"><input id="futureLumpYear" type="number" min="0" max="50" step="1" value="0" /><span>yrs</span></div><small>Leave the amount at zero if not applicable.</small></label>
+        </div>
+      </div>
+    </section>
+
+    <aside class="snapshot" aria-live="polite">
+      <div class="eyebrow">YOUR ESTIMATE</div>
+      <h2 id="snapshotTitle">Higher education</h2>
+      <div class="pill" id="timePill">12 years to goal</div>
+      <div class="hero-result">
+        <span>Estimated future goal cost</span>
+        <strong id="futureCost">₹56.30 L</strong>
+        <small id="futureCostNote">Based on today’s cost and your inflation assumption</small>
+      </div>
+      <dl class="metrics">
+        <div><dt>Projected value of current plan</dt><dd id="projectedPlan">₹37.15 L</dd></div>
+        <div><dt>Funding gap</dt><dd id="fundingGap">₹19.16 L</dd></div>
+        <div><dt>Total monthly investment required</dt><dd id="totalMonthly">₹15,144</dd></div>
+        <div><dt>Additional monthly investment</dt><dd id="additionalMonthly">₹7,144</dd></div>
+        <div><dt>Alternative additional lump sum today</dt><dd id="lumpToday">₹6.10 L</dd></div>
+      </dl>
+      <div class="funding-box">
+        <div><span>Projected funding</span><strong id="fundingPct">66%</strong></div>
+        <div class="bar"><i id="fundingBar" style="width:66%"></i></div>
+        <p id="fundingText">Your current savings plan is projected to cover about 66% of the modelled goal.</p>
+      </div>
+      <div class="snapshot-actions"><button class="btn btn-outline" id="copyBtn" type="button">Copy summary</button><button class="btn btn-primary" id="reportBtn" type="button">Create goal report</button></div>
+      <p class="fineprint">Illustrative planning tool only. Results depend on your assumptions and do not predict inflation, investment returns, taxes or future prices.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="visuals">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">VISUAL PLAN</div><h2>See how the goal evolves</h2></div><p>Charts update automatically as you change the assumptions.</p></div>
+    <div class="summary-row">
+      <div><span>Goal cost today</span><strong id="todayCostCard">₹25.00 L</strong></div>
+      <div><span>Future goal cost</span><strong id="futureCostCard">₹56.30 L</strong></div>
+      <div><span>Current-plan value</span><strong id="projectedCard">₹37.15 L</strong></div>
+      <div><span>Additional monthly amount</span><strong id="additionalCard">₹7,144</strong></div>
+    </div>
+    <div class="chart-grid">
+      <article class="chart-card"><div class="chart-head"><div><div class="eyebrow">GOAL COST</div><h3>How the goal cost may grow</h3></div><p id="costChartNote">Inflation-adjusted future currency</p></div><svg id="costChart" viewBox="0 0 800 300" role="img" aria-label="Goal cost growth chart"></svg></article>
+      <article class="chart-card"><div class="chart-head"><div><div class="eyebrow">SAVINGS PATH</div><h3>Your current plan vs the goal</h3></div><p>Projected values under your assumptions</p></div><svg id="savingsChart" viewBox="0 0 800 300" role="img" aria-label="Savings path versus goal chart"></svg></article>
+    </div>
+  </div>
+</section>
+
+<section class="insights">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">PLAN INSIGHTS</div><h2>What the numbers are telling you</h2></div><p>Illustrative observations from your current assumptions.</p></div>
+    <div class="insight-grid">
+      <article><span>Inflation impact</span><strong id="insightInflation">+125%</strong><p id="insightInflationText"></p></article>
+      <article><span>Current-plan progress</span><strong id="insightFunding">66% funded</strong><p id="insightFundingText"></p></article>
+      <article><span>Contribution adjustment</span><strong id="insightContribution">+₹7,144/mo</strong><p id="insightContributionText"></p></article>
+      <article><span>Time advantage</span><strong id="insightTime">2 extra years</strong><p id="insightTimeText"></p></article>
+    </div>
+  </div>
+</section>
+
+<section class="scenarios">
+  <div class="container">
+    <div class="section-head wide"><div><div class="eyebrow">WHAT IF?</div><h2>Compare goal dates</h2></div><p>Same assumptions, different time horizon.</p></div>
+    <div class="scenario-grid" id="scenarioGrid"></div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="container two-col">
+    <div><div class="eyebrow">HOW IT WORKS</div><h2>Separate the goal from the investment assumptions.</h2></div>
+    <div><p>First, Carrowmont estimates what the goal may cost at the selected date. Then it projects existing savings, monthly contributions and any future lump sum using the investment-return assumption. The difference becomes the modelled funding gap.</p><p>For home purchase, the target is the selected down payment. For emergency savings, the target is based on essential monthly expenses and the number of months selected.</p></div>
+  </div>
+</section>
+
+<section class="methodology" id="methodology">
+  <div class="container two-col">
+    <div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div>
+    <div><p><strong>Future goal cost:</strong> today’s goal cost × (1 + inflation assumption)<sup>years</sup>.</p><p><strong>Existing savings:</strong> projected at the entered annual investment return. Monthly contributions are modelled as end-of-month contributions using the monthly rate implied by the annual return.</p><p><strong>Required monthly amount:</strong> the monthly contribution that would model to the future target after allowing for existing savings and eligible future lump sums.</p><p class="method-note">All assumptions are user-controlled and constant for modelling purposes. Actual inflation, investment returns, taxes and future prices may differ materially.</p></div>
+  </div>
+</section>
+</main>
+
+<footer class="site-footer"><div class="container footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="container footer-bottom"><span>© 2026 Carrowmont</span><span>Illustrative estimates, not financial advice.</span></div></footer>
+
+<div id="printReport" class="print-report" aria-hidden="true"></div>
+<script src="locale.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
