@@ -35,3 +35,9 @@
 }
 @media print{.report-chart-block{break-inside:auto!important;page-break-inside:auto!important}.report-chart-block .report-chart,.report-chart-block .report-chart-stats,.report-chart-block .report-chart-note{break-inside:avoid;page-break-inside:avoid}}
 @media print{.report-chart-second-title{break-before:page;page-break-before:always;margin-top:0!important}}
+/* Carrowmont tool breadcrumb */
+.tool-breadcrumb{padding-top:18px;padding-bottom:0;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.78rem}
+.tool-breadcrumb a{color:var(--teal-dark,#08756d);text-decoration:none;font-weight:820}
+.tool-breadcrumb a:hover{text-decoration:underline}
+.intro .tool-breadcrumb + .intro-grid{padding-top:42px}
+@media(max-width:720px){.tool-breadcrumb{padding-top:12px}.intro .tool-breadcrumb + .intro-grid{padding-top:30px}}
