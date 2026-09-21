@@ -2,6 +2,8 @@
   "use strict";
   const L=window.CarrowmontLocale;
   const REPORT_ENGINE=window.CarrowmontReportEngine;
+  const PDF_EXPORT=window.CarrowmontPdfExport;
+  const GOAL_PDF=window.CarrowmontGoalPdfRenderer;
   const REPORT_CONFIG=window.CARROWMONT_GOAL_CONFIG||{};
   if(!L) return;
   const $=id=>document.getElementById(id);
@@ -214,7 +216,7 @@
     const poly=points.map(p=>`${x(p.year).toFixed(1)},${yy(p.value).toFixed(1)}`).join(' ');
     const area=`<polygon points="${x(0)},${H-B} ${poly} ${x(s.years)},${H-B}" fill="#0e827a" opacity="0.08"/>`;
     const milestoneYears=reportMilestoneYears(s.years);const milestones=milestoneYears.map((year,idx)=>{const p=points.reduce((best,v)=>Math.abs(v.year-year)<Math.abs(best.year-year)?v:best,points[0]);const px=x(p.year),py=yy(p.value);const title=p.year===0?'Today':Math.abs(p.year-s.years)<.001?`Goal date - year ${s.years}`:`Year ${Math.round(p.year)}`;const value=compact(p.value);const bw=118,bh=30;let bx=idx===milestoneYears.length-1?px-bw-8:px+8;let by=py-bh-8;by=Math.max(3,by);if(idx===1&&by<40)by=40;return `<g><circle cx="${px}" cy="${py}" r="4" fill="#0e827a" stroke="#fff" stroke-width="1.5"/><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="#f3f9f8" stroke="#b8ddd7"/><text x="${bx+7}" y="${by+11}" font-size="7.4" font-weight="750" fill="#40566e">${esc(title)}</text><text x="${bx+7}" y="${by+23}" font-size="8.5" font-weight="850" fill="#0e827a">${esc(value)}</text></g>`;}).join('');
-    const xTicks=[0,Math.round(s.years/2),s.years].filter((y,i,a)=>a.indexOf(y)===i).map(y=>`<text x="${x(y)}" y="${H-10}" text-anchor="middle" font-size="8" fill="#53687f">${y===0?'Today':y===s.years?`Goal - year ${s.years}`:`Year ${y}`}</text>`).join('');
+    const xTicks=[0,Math.round(s.years/2),s.years].filter((y,i,a)=>a.indexOf(y)===i).map(y=>{const anchor=y===0?'start':y===s.years?'end':'middle';const px=y===0?x(y)+2:y===s.years?x(y)-2:x(y);return `<text x="${px}" y="${H-10}" text-anchor="${anchor}" font-size="8" fill="#53687f">${y===0?'Today':y===s.years?`Goal - year ${s.years}`:`Year ${y}`}</text>`;}).join('');
     container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="presentation" aria-hidden="true">${grid}${area}<polyline fill="none" stroke="#0e827a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="${poly}"/>${milestones}${xTicks}</svg>`;
   }
   function renderReportSavingsChart(container,s,c){
@@ -231,7 +233,7 @@
     if(gap>0){const gx=ex-42,mid=(gy+py)/2;gapMark=`<line x1="${gx}" y1="${gy}" x2="${gx}" y2="${py}" stroke="#c18a22" stroke-width="1.7"/><line x1="${gx-5}" y1="${gy}" x2="${gx+5}" y2="${gy}" stroke="#c18a22" stroke-width="1.7"/><line x1="${gx-5}" y1="${py}" x2="${gx+5}" y2="${py}" stroke="#c18a22" stroke-width="1.7"/><rect x="${gx-130}" y="${mid-9}" width="122" height="18" rx="6" fill="#fff7e7" stroke="#ead6a7"/><text x="${gx-123}" y="${mid+3}" font-size="8" font-weight="800" fill="#7a5716">Funding gap ${esc(compact(gap))}</text>`;}
     const goalBoxY=Math.max(T+8,gy-38),planBoxY=Math.min(H-B-32,Math.max(T+44,py+8));
     const boxes=`<g><rect x="${ex-172}" y="${goalBoxY}" width="164" height="30" rx="6" fill="#f3f7fa" stroke="#cbd9e2"/><text x="${ex-164}" y="${goalBoxY+11}" font-size="7.4" font-weight="750" fill="#40566e">Goal at year ${s.years}</text><text x="${ex-164}" y="${goalBoxY+23}" font-size="8.5" font-weight="850" fill="#123f5f">${esc(compact(endGoal.value))}</text><rect x="${ex-172}" y="${planBoxY}" width="164" height="30" rx="6" fill="#eef8f6" stroke="#b9ddd7"/><text x="${ex-164}" y="${planBoxY+11}" font-size="7.4" font-weight="750" fill="#40566e">Current plan at year ${s.years}</text><text x="${ex-164}" y="${planBoxY+23}" font-size="8.5" font-weight="850" fill="#0e827a">${esc(compact(endPlan.value))}</text></g>`;
-    const xTicks=[0,Math.round(s.years/2),s.years].filter((y,i,a)=>a.indexOf(y)===i).map(y=>`<text x="${x(y)}" y="${H-10}" text-anchor="middle" font-size="8" fill="#53687f">${y===0?'Today':y===s.years?`Goal - year ${s.years}`:`Year ${y}`}</text>`).join('');
+    const xTicks=[0,Math.round(s.years/2),s.years].filter((y,i,a)=>a.indexOf(y)===i).map(y=>{const anchor=y===0?'start':y===s.years?'end':'middle';const px=y===0?x(y)+2:y===s.years?x(y)-2:x(y);return `<text x="${px}" y="${H-10}" text-anchor="${anchor}" font-size="8" fill="#53687f">${y===0?'Today':y===s.years?`Goal - year ${s.years}`:`Year ${y}`}</text>`;}).join('');
     container.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="presentation" aria-hidden="true">${legend}${grid}<polyline fill="none" stroke="#123f5f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="${gpoly}"/><polyline fill="none" stroke="#0e827a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="${ppoly}"/><circle cx="${ex}" cy="${gy}" r="4" fill="#123f5f"/><circle cx="${ex}" cy="${py}" r="4" fill="#0e827a"/>${gapMark}${boxes}${xTicks}</svg>`;
   }
   function buildReport(s,c){
@@ -268,14 +270,41 @@
     renderReportSavingsChart($('reportSavingsChart'),s,c);
     $('reportSavingsChartStats').innerHTML=[[`Goal at year ${s.years}`,compact(c.futureCost)],[`Current plan at year ${s.years}`,compact(c.projected)],[surplus>0?'Projected surplus':'Funding gap',compact(surplus>0?surplus:c.gap)],['Projected funding from current plan',`${Math.min(100,Math.round(fundingPct))}%`]].map(([label,value])=>`<div class="report-chart-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
     $('reportSavingsChartNote').textContent=`How to read this chart: the blue line is the modelled goal-cost path. The green line is the value of your current plan - existing savings, current monthly contributions and any entered future lump sum - before any increase. At the selected goal date the current plan is projected at ${compact(c.projected)} versus a goal of ${compact(c.futureCost)}, which is about ${Math.min(100,Math.round(fundingPct))}% funded${surplus>0?` with a projected surplus of ${compact(surplus)}`:` with a funding gap of ${compact(c.gap)}`}.`;
+    return model;
   }
   async function copySummary(){
     const s=state(),c=calc(s),m=buildGoalReportModel(s,c),p=c.futureCost>0?Math.min(100,Math.round(c.projected/c.futureCost*100)):0;
     const txt=[`CARROWMONT GOAL PLANNING SUMMARY`,``, `Goal: ${s.name}`,`Goal type: ${templates[s.type].label}`,`Country / region: ${regionLabel()}`,`Currency: ${currencyCode()}`,`Years to goal: ${s.years}`,`Goal cost today: ${money(s.today)}`,`Inflation / price-growth assumption: ${(s.inflation*100).toFixed(1)}%`,`Expected investment return: ${(s.ret*100).toFixed(1)}%`,``, `Estimated goal cost at goal date: ${money(c.futureCost)}`,`Projected value of current plan at goal date: ${money(c.projected)}`,`Projected funding from current plan: ${p}%`,`Funding gap: ${money(c.gap)}`,`Current monthly contribution: ${money(s.monthly)}`,`Total monthly investment required: ${money(c.monthlyRequired)}`,`Additional monthly investment required: ${money(c.additional)}`,`Alternative additional lump sum today: ${money(c.lumpToday)}`,``, `Calculated using ${m.methodology.label||'the current Goal Planner methodology'}.`,`Illustrative estimate only. Actual inflation, investment returns, taxes, fees and future prices may differ.`,`carrowmont.com`].join('\n');
     try{await navigator.clipboard.writeText(txt);els.copyBtn.textContent='Copied';setTimeout(()=>els.copyBtn.textContent='Copy summary',1400);}catch(_){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
   }
+  async function downloadGoalReport(){
+    if(!PDF_EXPORT||!GOAL_PDF){
+      alert('The PDF download engine did not load. Please refresh the page and try again.');
+      return;
+    }
+    const s=state(),c=calc(s);
+    const model=buildReport(s,c);
+    const original=els.reportBtn.textContent;
+    els.reportBtn.disabled=true;
+    els.reportBtn.setAttribute('aria-busy','true');
+    els.reportBtn.textContent='Preparing PDF...';
+    try{
+      const canvases=await GOAL_PDF.render(els.printReport);
+      const base=REPORT_ENGINE?REPORT_ENGINE.filename('goal-planning-report',new Date(model.generatedAt||Date.now())):`goal-planning-report-${model.generatedDate||''}`;
+      await PDF_EXPORT.downloadCanvases(canvases,{filename:`${base}.pdf`,quality:.94});
+      els.reportBtn.textContent='Report downloaded';
+    }catch(err){
+      console.error('Goal report PDF generation failed',err);
+      els.reportBtn.textContent='PDF failed - try again';
+      alert('The report could not be generated. Please refresh the page and try again.');
+    }finally{
+      els.reportBtn.disabled=false;
+      els.reportBtn.removeAttribute('aria-busy');
+      setTimeout(()=>{if(els.reportBtn.textContent!=='Preparing PDF...')els.reportBtn.textContent=original;},1800);
+    }
+  }
   els.copyBtn.addEventListener('click',copySummary);
-  els.reportBtn.addEventListener('click',()=>{const s=state(),c=calc(s);buildReport(s,c);const old=document.title;document.title=`Carrowmont Goal Planning Report - ${s.name}`;requestAnimationFrame(()=>requestAnimationFrame(()=>{window.print();setTimeout(()=>document.title=old,500);}));});
+  els.reportBtn.addEventListener('click',downloadGoalReport);
 
 
   populateLocale();buildGoalTypes();showDynamic();
