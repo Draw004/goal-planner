@@ -45,7 +45,7 @@
           <label>Currency
             <select id="currencySelect"></select>
           </label>
-          <div class="locale-note"><strong>Important:</strong> changing currency changes the unit and number format. It does not convert entered amounts using an exchange rate.</div>
+          <div class="locale-note"><strong>Important:</strong> Changing currency changes the unit and number format. It does not convert entered amounts using an exchange rate.</div>
           <button class="btn btn-primary btn-small" id="localeDone" type="button">Done</button>
         </div>
       </details>
@@ -180,15 +180,129 @@
 <section class="methodology" id="methodology">
   <div class="container two-col">
     <div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div>
-    <div><p><strong>Future goal cost:</strong> today’s goal cost × (1 + inflation assumption)<sup>years</sup>.</p><p><strong>Existing savings:</strong> projected at the entered annual investment return. Monthly contributions are modelled as end-of-month contributions using the monthly rate implied by the annual return.</p><p><strong>Required monthly amount:</strong> the monthly contribution that would model to the future target after allowing for existing savings and eligible future lump sums.</p><p class="method-note">All assumptions are user-controlled and constant for modelling purposes. Actual inflation, investment returns, taxes and future prices may differ materially.</p></div>
+    <div><p><strong>Future goal cost:</strong> Today’s goal cost × (1 + inflation assumption)<sup>years</sup>.</p><p><strong>Existing savings:</strong> Projected at the entered annual investment return. Monthly contributions are modelled as end-of-month contributions using the monthly rate implied by the annual return.</p><p><strong>Required monthly amount:</strong> The monthly contribution that would model to the future target after allowing for existing savings and eligible future lump sums.</p><p class="method-note">All assumptions are user-controlled and constant for modelling purposes. Actual inflation, investment returns, taxes and future prices may differ materially.</p></div>
   </div>
 </section>
 </main>
 
 <footer class="site-footer"><div class="container footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="container footer-bottom"><span>© 2026 Carrowmont</span><span>Illustrative estimates, not financial advice.</span></div></footer>
 
-<div id="printReport" class="print-report" aria-hidden="true"></div>
+<section id="printReport" class="print-report report-section" aria-label="Carrowmont goal planning report">
+  <div class="report-shell">
+    <header class="report-header">
+      <div>
+        <div class="report-brand">CARROWMONT</div>
+        <h1>Goal Planning Report</h1>
+        <p>Prepared from the Carrowmont Goal Planner</p>
+        <span class="report-mode-badge" id="reportGoalTypeBadge">Goal type</span>
+      </div>
+      <div class="report-meta">
+        <strong id="reportGenerated">Generated</strong>
+        <span>Educational planning report</span>
+        <span>carrowmont.com</span>
+      </div>
+    </header>
+
+    <section class="report-goal-title-block">
+      <span class="report-eyebrow">Your goal</span>
+      <h2 id="reportGoalName">Goal</h2>
+      <p id="reportGoalTiming">Goal timing</p>
+    </section>
+
+    <section class="report-hero">
+      <div>
+        <span id="reportFutureCostLabel">Estimated goal cost at goal date</span>
+        <strong id="reportFutureCost">-</strong>
+        <small id="reportFutureCostNote">Future money at the selected goal date</small>
+      </div>
+      <div class="report-hero-side">
+        <span id="reportProjectedPlanLabel">Projected value of current plan at goal date</span>
+        <strong id="reportProjectedPlan">-</strong>
+        <small id="reportFundingStatus">Current plan status</small>
+      </div>
+    </section>
+
+    <p class="report-executive-note" id="reportExecutiveNote">Funding summary.</p>
+
+    <section class="report-summary-grid report-summary-grid-six">
+      <div><span>Goal cost today</span><strong id="reportTodayCost">-</strong></div>
+      <div><span>Years to goal</span><strong id="reportYears">-</strong></div>
+      <div><span>Projected funding from current plan</span><strong id="reportFundingPct">-</strong></div>
+      <div><span id="reportGapLabel">Funding gap at goal date</span><strong id="reportGap">-</strong></div>
+      <div><span>Total monthly investment required from now</span><strong id="reportMonthlyRequired">-</strong></div>
+      <div><span>Alternative additional lump sum today</span><strong id="reportLumpToday">-</strong></div>
+    </section>
+
+    <section class="report-block report-action-block">
+      <div class="report-section-heading">
+        <div><span class="report-eyebrow">What you can change</span><h2>Monthly investment required by the model</h2></div>
+        <span>Same assumptions - selected goal date</span>
+      </div>
+      <div class="report-action-grid report-action-grid-primary">
+        <div><span>Current monthly contribution</span><strong id="reportCurrentMonthly">-</strong></div>
+        <div><span>Total monthly investment required from now</span><strong id="reportNeededMonthly">-</strong></div>
+      </div>
+      <div class="report-action-ribbon report-action-ribbon-gap" id="reportAdditionalRibbon">
+        <div><span>Additional monthly investment required</span><small>Key action under the selected assumptions</small></div>
+        <strong id="reportAdditionalMonthly">-</strong>
+      </div>
+      <p class="report-explainer" id="reportActionNarrative">Illustrative only.</p>
+    </section>
+
+    <section class="report-block report-two-col">
+      <div>
+        <h2>Where the projected current-plan value comes from</h2>
+        <p class="report-basis-note">Future money at the goal date unless noted</p>
+        <table class="report-table"><tbody id="reportFundingSources"></tbody></table>
+      </div>
+      <div>
+        <h2>Impact of inflation / price growth</h2>
+        <p class="report-basis-note">Compares today's amount with the nominal amount at the goal date</p>
+        <table class="report-table"><tbody id="reportInflationImpact"></tbody></table>
+        <p class="report-explainer" id="reportInflationNarrative">Today's money is the amount now; future money is the modelled nominal amount at the goal date.</p>
+      </div>
+    </section>
+
+    <section class="report-block report-assumptions-block">
+      <h2 class="report-section-ribbon">Plan assumptions</h2>
+      <table class="report-table report-assumption-table"><tbody id="reportAssumptions"></tbody></table>
+    </section>
+
+    <section class="report-block">
+      <h2>Goal-date comparison</h2>
+      <table class="report-table report-scenario-table">
+        <colgroup><col class="scenario-date-col"><col class="scenario-cost-col"><col class="scenario-monthly-col"><col class="scenario-funded-col"></colgroup>
+        <thead><tr><th>Goal timing</th><th>Goal cost<br><span>(future money at that date)</span></th><th>Monthly investment required<br><span>(from now)</span></th><th>Projected funding<br><span>(from current plan before any increase)</span></th></tr></thead>
+        <tbody id="reportScenarios"></tbody>
+      </table>
+      <p class="report-scenario-note" id="reportScenarioNote">Projected funding uses the existing savings, current monthly contribution and any entered future lump sum. It does not assume the monthly investment required shown in the previous column.</p>
+    </section>
+
+    <section class="report-block report-chart-block">
+      <h2>Goal planning visuals</h2>
+      <p class="report-chart-intro">These charts show how the goal cost may change and how the current savings plan compares with the goal path.</p>
+      <h3>Goal cost path</h3>
+      <div id="reportCostChart" class="report-chart"></div>
+      <div id="reportCostChartStats" class="report-chart-stats" aria-label="Goal cost chart key values"></div>
+      <p class="report-chart-note" id="reportCostChartNote">Today is a current amount; later points are nominal future-money amounts at those dates.</p>
+      <h3 class="report-chart-second-title">Current plan vs goal path</h3>
+      <div id="reportSavingsChart" class="report-chart"></div>
+      <div id="reportSavingsChartStats" class="report-chart-stats report-chart-stats-four" aria-label="Savings chart key values"></div>
+      <p class="report-chart-note" id="reportSavingsChartNote">Projected funding is based on the current plan before any increase.</p>
+    </section>
+
+    <section class="report-notes">
+      <h2>Methodology & important information</h2>
+      <p>The model estimates the future goal cost from the amount entered today and the selected inflation or price-growth assumption. It then projects existing savings, current monthly contributions and any future lump sum using the investment-return assumption. The difference at the selected date is the modelled funding gap.</p>
+      <p>This report is an educational planning illustration based entirely on the information and assumptions entered. It does not predict inflation, investment returns, taxes, fees or future prices. It is not individualized investment, financial, tax, legal, accounting or insurance advice. Actual outcomes can differ materially.</p>
+      <p><strong id="reportMethodologyLabel">Methodology:</strong> <span id="reportMethodologyUrl">carrowmont.com/goal-planner/#methodology</span> &nbsp; &middot; &nbsp; <strong>Contact:</strong> contact@carrowmont.com</p>
+      <div class="report-footer-brand"><strong>CARROWMONT</strong><span>Financial Planning, Tools & Learning &middot; carrowmont.com</span></div>
+    </section>
+  </div>
+</section>
+<script src="site-config.js"></script>
 <script src="locale.js"></script>
+<script src="report-engine.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
