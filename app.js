@@ -278,29 +278,25 @@
     try{await navigator.clipboard.writeText(txt);els.copyBtn.textContent='Copied';setTimeout(()=>els.copyBtn.textContent='Copy Summary',1400);}catch(_){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
   }
   async function downloadGoalReport(){
+    const status=document.getElementById('reportDownloadStatus');
     if(!PDF_EXPORT||!GOAL_PDF){
-      alert('The PDF download engine did not load. Please refresh the page and try again.');
+      if(status)status.textContent='The report could not be generated. Please refresh the page and try again.';
       return;
     }
     const s=state(),c=calc(s);
     const model=buildReport(s,c);
-    const original=els.reportBtn.textContent;
-    els.reportBtn.disabled=true;
-    els.reportBtn.setAttribute('aria-busy','true');
-    els.reportBtn.textContent='Preparing PDF...';
+    els.reportBtn.disabled=true;els.reportBtn.setAttribute('aria-busy','true');
+    if(status)status.textContent='Preparing your report...';
     try{
       const canvases=await GOAL_PDF.render(els.printReport);
       const base=REPORT_ENGINE?REPORT_ENGINE.filename('goal-planning-report',new Date(model.generatedAt||Date.now())):`goal-planning-report-${model.generatedDate||''}`;
       await PDF_EXPORT.downloadCanvases(canvases,{filename:`${base}.pdf`,quality:.94});
-      els.reportBtn.textContent='Report downloaded';
+      if(status)status.textContent='Report has been downloaded.';
     }catch(err){
       console.error('Goal report PDF generation failed',err);
-      els.reportBtn.textContent='PDF failed - try again';
-      alert('The report could not be generated. Please refresh the page and try again.');
+      if(status)status.textContent='The report could not be generated. Please refresh the page and try again.';
     }finally{
-      els.reportBtn.disabled=false;
-      els.reportBtn.removeAttribute('aria-busy');
-      setTimeout(()=>{if(els.reportBtn.textContent!=='Preparing PDF...')els.reportBtn.textContent=original;},1800);
+      els.reportBtn.disabled=false;els.reportBtn.removeAttribute('aria-busy');
     }
   }
   els.copyBtn.addEventListener('click',copySummary);

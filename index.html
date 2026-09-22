@@ -15,7 +15,7 @@
   <meta property="og:url" content="https://carrowmont.com/goal-planner/" />
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#0e827a" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260922.4" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont Goal Planner","url":"https://carrowmont.com/goal-planner/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational goal-planning calculator for modelling future goal costs, savings progress and monthly funding needs."}</script>
 </head>
 <body>
@@ -131,6 +131,7 @@
         <p id="fundingText">Your current savings plan is projected to cover about 66% of the modelled goal.</p>
       </div>
       <div class="snapshot-actions"><button class="btn btn-outline" id="copyBtn" type="button">Copy Summary</button><button class="btn btn-primary" id="reportBtn" type="button">Generate Goal Report</button></div>
+      <div class="report-download-status" id="reportDownloadStatus" role="status" aria-live="polite"></div>
       <p class="fineprint">Illustrative planning tool only. Results depend on your assumptions and do not predict inflation, investment returns, taxes or future prices.</p>
     </aside>
   </div>
@@ -304,8 +305,8 @@
 <script src="site-config.js"></script>
 <script src="locale.js"></script>
 <script src="report-engine.js"></script>
-<script src="pdf-export.js"></script>
-<script src="goal-pdf-renderer.js"></script>
-<script src="app.js"></script>
+<script src="pdf-export.js?v=20260922.4"></script>
+<script src="goal-pdf-renderer.js?v=20260922.4"></script>
+<script src="app.js?v=20260922.4"></script>
 </body>
 </html>

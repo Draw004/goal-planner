@@ -51,3 +51,10 @@
 .locale-chevron{width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 14px;font-size:0}
 .locale-chevron svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:720px){.locale-menu summary{min-width:auto;padding:9px 11px;font-size:13px}}
+
+/* Standard report-download feedback used across all Carrowmont tools. */
+.report-download-status{
+  min-height:1.35em;margin:9px 0 0;text-align:center;
+  color:var(--teal-dark,#08756d);font-size:.82rem;font-weight:750;line-height:1.4;
+}
+.report-download-status:empty{margin-top:0;min-height:0;}
