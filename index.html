@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Goal Planner | Carrowmont</title>
-  <meta name="description" content="Plan education, a home, wedding, travel, vehicle, emergency savings or another future goal. Estimate future cost, funding gap and monthly savings needed." />
+  <meta name="description" content="Plan education, a home, wedding, travel, vehicle, emergency savings or another future goal. Estimate future cost, funding gap and recurring savings needed." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://carrowmont.com/goal-planner/" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -16,7 +16,7 @@
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#0e827a" />
   <link rel="stylesheet" href="styles.css?v=20260922.5" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont Goal Planner","url":"https://carrowmont.com/goal-planner/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational goal-planning calculator for modelling future goal costs, savings progress and monthly funding needs."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont Goal Planner","url":"https://carrowmont.com/goal-planner/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational goal-planning calculator for modelling future goal costs, savings progress and recurring funding needs."}</script>
 </head>
 <body>
 <header class="site-header">
@@ -100,11 +100,14 @@
       <div class="step">
         <div class="step-title"><span>3</span><div><h3>Savings & investment assumptions</h3><p>These determine what your current plan may grow to by the goal date.</p></div></div>
         <div class="fields">
-          <label class="field"><span>Existing savings for this goal</span><div class="money-input"><span class="currency-prefix">₹</span><input id="existingSavings" type="number" min="0" step="1000" value="500000" /></div></label>
-          <label class="field"><span>Current monthly contribution</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlyContribution" type="number" min="0" step="500" value="8000" /></div></label>
+          <label class="field"><span>Existing savings for this goal</span><div class="money-input"><span class="currency-prefix">₹</span><input id="existingSavings" type="number" min="0" step="1000" value="500000" /></div><small>Enter money already set aside specifically for this goal.</small></label>
+          <label class="field"><span id="currentContributionLabel">Current monthly contribution</span><div class="money-input"><span class="currency-prefix">₹</span><input id="monthlyContribution" type="number" min="0" step="500" value="8000" /></div><small id="currentContributionHelp">Enter how much you currently contribute each month toward this goal.</small></label>
+          <label class="field"><span>Pay frequency</span><select id="payFrequency" aria-label="Pay frequency"><option value="weekly">Weekly</option><option value="biweekly">Every 2 Weeks</option><option value="semimonthly">Twice Monthly</option><option value="fourweekly">Every 4 Weeks</option><option value="monthly" selected>Monthly</option></select><small>How often you receive income. This does not change the goal calculation unless you choose “Same as my pay cycle”.</small></label>
+          <label class="field"><span>Savings / contribution frequency</span><select id="contributionFrequency" aria-label="Savings or contribution frequency"><option value="weekly">Weekly</option><option value="biweekly">Every 2 Weeks</option><option value="semimonthly">Twice Monthly</option><option value="fourweekly">Every 4 Weeks</option><option value="monthly" selected>Monthly</option></select><small>How often you add money toward this goal. This frequency is used in the calculation.</small></label>
+          <div class="field frequency-link-field"><span>Frequency link</span><label class="check-row" for="sameAsPayCycle"><input id="sameAsPayCycle" type="checkbox" /><span>Same as my pay cycle</span></label><small>Optional. When selected, the savings / contribution frequency follows Pay frequency.</small></div>
           <label class="field"><span>Expected annual investment return</span><div class="input-suffix"><input id="returnRate" type="number" min="0" max="30" step="0.1" value="10" /><span>%</span></div><small>Used as a constant modelling assumption.</small></label>
-          <label class="field"><span>Optional future lump sum</span><div class="money-input"><span class="currency-prefix">₹</span><input id="futureLump" type="number" min="0" step="1000" value="0" /></div></label>
-          <label class="field"><span>Years until that lump sum</span><div class="input-suffix"><input id="futureLumpYear" type="number" min="0" max="50" step="1" value="0" /><span>yrs</span></div><small>Leave the amount at zero if not applicable.</small></label>
+          <label class="field"><span>Optional future one-time investment</span><div class="money-input"><span class="currency-prefix">₹</span><input id="futureLump" type="number" min="0" step="1000" value="0" /></div><small>Enter an amount only if you already expect to add a separate one-time investment later.</small></label>
+          <label class="field hidden" id="futureLumpTimingField"><span>When will this investment be made?</span><div class="input-suffix"><input id="futureLumpYear" type="number" min="0" max="50" step="1" value="0" /><span>yrs</span></div><small>Years from now.</small></label>
         </div>
       </div>
     </section>
@@ -121,9 +124,9 @@
       <dl class="metrics">
         <div><dt>Projected value of current plan</dt><dd id="projectedPlan">₹37.15 L</dd></div>
         <div><dt>Funding gap</dt><dd id="fundingGap">₹19.16 L</dd></div>
-        <div><dt>Total monthly investment required</dt><dd id="totalMonthly">₹15,144</dd></div>
-        <div><dt>Additional monthly investment</dt><dd id="additionalMonthly">₹7,144</dd></div>
-        <div><dt>Alternative additional lump sum today</dt><dd id="lumpToday">₹6.10 L</dd></div>
+        <div><dt id="totalContributionLabel">Total monthly contribution required</dt><dd id="totalMonthly">₹15,144/month</dd></div>
+        <div><dt id="additionalContributionLabel">Additional monthly contribution required</dt><dd id="additionalMonthly">₹7,144/month</dd></div>
+        <div><dt>Alternative one-time investment today</dt><dd id="lumpToday">₹6.10 L</dd></div>
       </dl>
       <div class="funding-box">
         <div><span>Projected funding</span><strong id="fundingPct">66%</strong></div>
@@ -144,7 +147,7 @@
       <div><span>Goal cost today</span><strong id="todayCostCard">₹25.00 L</strong></div>
       <div><span>Future goal cost</span><strong id="futureCostCard">₹56.30 L</strong></div>
       <div><span>Current-plan value</span><strong id="projectedCard">₹37.15 L</strong></div>
-      <div><span>Additional monthly amount</span><strong id="additionalCard">₹7,144</strong></div>
+      <div><span id="additionalContributionCardLabel">Additional monthly contribution</span><strong id="additionalCard">₹7,144/month</strong></div>
     </div>
     <div class="chart-grid">
       <article class="chart-card"><div class="chart-head"><div><div class="eyebrow">GOAL COST</div><h3>How the goal cost may grow</h3></div><p id="costChartNote">Hover or tap to inspect yearly values.</p></div><svg id="costChart" viewBox="0 0 800 300" role="img" aria-label="Goal cost growth chart"></svg></article>
@@ -175,14 +178,14 @@
 <section class="how" id="how">
   <div class="container two-col">
     <div><div class="eyebrow">HOW IT WORKS</div><h2>Separate the goal from the investment assumptions.</h2></div>
-    <div><p>First, Carrowmont estimates what the goal may cost at the selected date. Then it projects existing savings, monthly contributions and any future lump sum using the investment-return assumption. The difference becomes the modelled funding gap.</p><p>For home purchase, the target is the selected down payment. For emergency savings, the target is based on essential monthly expenses and the number of months selected.</p></div>
+    <div><p>First, Carrowmont estimates what the goal may cost at the selected date. Then it projects existing savings, recurring contributions at the selected savings / contribution frequency and any future one-time investment using the investment-return assumption. The difference becomes the modelled funding gap.</p><p>For home purchase, the target is the selected down payment. For emergency savings, the target is based on essential monthly expenses and the number of months selected.</p></div>
   </div>
 </section>
 
 <section class="methodology" id="methodology">
   <div class="container two-col">
     <div><div class="eyebrow">METHODOLOGY</div><h2>Transparent calculations.</h2></div>
-    <div><p><strong>Future goal cost:</strong> Today’s goal cost × (1 + inflation assumption)<sup>years</sup>.</p><p><strong>Existing savings:</strong> Projected at the entered annual investment return. Monthly contributions are modelled as end-of-month contributions using the monthly rate implied by the annual return.</p><p><strong>Required monthly amount:</strong> The monthly contribution that would model to the future target after allowing for existing savings and eligible future lump sums.</p><p class="method-note">All assumptions are user-controlled and constant for modelling purposes. Actual inflation, investment returns, taxes and future prices may differ materially.</p></div>
+    <div><p><strong>Future goal cost:</strong> Today’s goal cost × (1 + inflation assumption)<sup>years</sup>.</p><p><strong>Existing savings:</strong> Projected at the entered annual investment return. Recurring contributions are modelled at the selected savings / contribution frequency using the equivalent periodic rate implied by the annual return.</p><p><strong>Required contribution:</strong> The recurring contribution at the selected frequency that would model to the future target after allowing for existing savings and any eligible future one-time investment.</p><p class="method-note">All assumptions are user-controlled and constant for modelling purposes. Actual inflation, investment returns, taxes and future prices may differ materially.</p></div>
   </div>
 </section>
 </main>
@@ -231,21 +234,21 @@
       <div><span>Years to goal</span><strong id="reportYears">-</strong></div>
       <div><span>Projected funding from current plan</span><strong id="reportFundingPct">-</strong></div>
       <div><span id="reportGapLabel">Funding gap at goal date</span><strong id="reportGap">-</strong></div>
-      <div><span>Total monthly investment required from now</span><strong id="reportMonthlyRequired">-</strong></div>
-      <div><span>Alternative additional lump sum today</span><strong id="reportLumpToday">-</strong></div>
+      <div><span id="reportRequiredLabel">Total monthly contribution required from now</span><strong id="reportMonthlyRequired">-</strong></div>
+      <div><span>Alternative one-time investment today</span><strong id="reportLumpToday">-</strong></div>
     </section>
 
     <section class="report-block report-action-block">
       <div class="report-section-heading">
-        <div><span class="report-eyebrow">What you can change</span><h2>Monthly investment required by the model</h2></div>
+        <div><span class="report-eyebrow">What you can change</span><h2 id="reportActionHeading">Monthly contribution required by the model</h2></div>
         <span>Same assumptions - selected goal date</span>
       </div>
       <div class="report-action-grid report-action-grid-primary">
-        <div><span>Current monthly contribution</span><strong id="reportCurrentMonthly">-</strong></div>
-        <div><span>Total monthly investment required from now</span><strong id="reportNeededMonthly">-</strong></div>
+        <div><span id="reportCurrentContributionLabel">Current monthly contribution</span><strong id="reportCurrentMonthly">-</strong></div>
+        <div><span id="reportNeededContributionLabel">Total monthly contribution required from now</span><strong id="reportNeededMonthly">-</strong></div>
       </div>
       <div class="report-action-ribbon report-action-ribbon-gap" id="reportAdditionalRibbon">
-        <div><span>Additional monthly investment required</span><small>Key action under the selected assumptions</small></div>
+        <div><span id="reportAdditionalContributionLabel">Additional monthly contribution required</span><small>Key action under the selected assumptions</small></div>
         <strong id="reportAdditionalMonthly">-</strong>
       </div>
       <p class="report-explainer" id="reportActionNarrative">Illustrative only.</p>
@@ -274,10 +277,10 @@
       <h2>Goal-date comparison</h2>
       <table class="report-table report-scenario-table">
         <colgroup><col class="scenario-date-col"><col class="scenario-cost-col"><col class="scenario-monthly-col"><col class="scenario-funded-col"></colgroup>
-        <thead><tr><th>Goal timing</th><th>Goal cost<br><span>(future money at that date)</span></th><th>Monthly investment required<br><span>(from now)</span></th><th>Projected funding<br><span>(from current plan before any increase)</span></th></tr></thead>
+        <thead><tr><th>Goal timing</th><th>Goal cost<br><span>(future money at that date)</span></th><th id="reportScenarioRequiredHeader">Contribution required<br><span>(from now, at selected frequency)</span></th><th>Projected funding<br><span>(from current plan before any increase)</span></th></tr></thead>
         <tbody id="reportScenarios"></tbody>
       </table>
-      <p class="report-scenario-note" id="reportScenarioNote">Projected funding uses the existing savings, current monthly contribution and any entered future lump sum. It does not assume the monthly investment required shown in the previous column.</p>
+      <p class="report-scenario-note" id="reportScenarioNote">Projected funding uses the existing savings, current recurring contribution and any entered future one-time investment. It does not assume the contribution required shown in the previous column.</p>
     </section>
 
     <section class="report-block report-chart-block">
@@ -295,7 +298,7 @@
 
     <section class="report-notes">
       <h2>Methodology & important information</h2>
-      <p>The model estimates the future goal cost from the amount entered today and the selected inflation or price-growth assumption. It then projects existing savings, current monthly contributions and any future lump sum using the investment-return assumption. The difference at the selected date is the modelled funding gap.</p>
+      <p>The model estimates the future goal cost from the amount entered today and the selected inflation or price-growth assumption. It then projects existing savings, recurring contributions at the selected savings / contribution frequency and any future one-time investment using the investment-return assumption. The difference at the selected date is the modelled funding gap.</p>
       <p>This report is an educational planning illustration based entirely on the information and assumptions entered. It does not predict inflation, investment returns, taxes, fees or future prices. It is not individualized investment, financial, tax, legal, accounting or insurance advice. Actual outcomes can differ materially.</p>
       <p><strong id="reportMethodologyLabel">Methodology:</strong> <span id="reportMethodologyUrl">carrowmont.com/goal-planner/#methodology</span> &nbsp; &middot; &nbsp; <strong>Contact:</strong> contact@carrowmont.com</p>
       <div class="report-footer-brand"><strong>CARROWMONT</strong><span>Financial Planning, Tools & Learning &middot; carrowmont.com</span></div>
@@ -307,8 +310,8 @@
 <script src="report-engine.js"></script>
 <script src="pdf-export.js?v=20260922.5"></script>
 <script src="report-standard.js?v=20260925.2"></script>
-<script src="goal-pdf-renderer.js?v=20260925.1"></script>
-<script src="app.js?v=20260922.5"></script>
+<script src="goal-pdf-renderer.js?v=20260926.1"></script>
+<script src="app.js?v=20260926.1"></script>
 <script src="analytics.js?v=1.0.1" data-carrowmont-tool="goal_planner" data-track-tool-open="true"></script>
 </body>
 </html>
