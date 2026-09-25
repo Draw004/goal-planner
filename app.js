@@ -9,9 +9,9 @@
   const $=id=>document.getElementById(id);
   const els={
     localeMenu:$('localeMenu'),localeSummary:$('localeSummary'),localeCurrent:$('localeCurrent'),regionSelect:$('regionSelect'),currencySelect:$('currencySelect'),localeDone:$('localeDone'),
-    goalTypes:$('goalTypes'),goalName:$('goalName'),years:$('years'),amountToday:$('amountToday'),propertyValue:$('propertyValue'),downPayment:$('downPayment'),monthlyExpenses:$('monthlyExpenses'),expenseMonths:$('expenseMonths'),inflationRate:$('inflationRate'),existingSavings:$('existingSavings'),monthlyContribution:$('monthlyContribution'),returnRate:$('returnRate'),futureLump:$('futureLump'),futureLumpYear:$('futureLumpYear'),inflationLabel:$('inflationLabel'),amountLabel:$('amountLabel'),amountHelp:$('amountHelp'),goalHelp:$('goalHelp'),resetBtn:$('resetBtn'),
+    goalTypes:$('goalTypes'),goalName:$('goalName'),years:$('years'),amountToday:$('amountToday'),propertyValue:$('propertyValue'),downPayment:$('downPayment'),monthlyExpenses:$('monthlyExpenses'),expenseMonths:$('expenseMonths'),inflationRate:$('inflationRate'),existingSavings:$('existingSavings'),monthlyContribution:$('monthlyContribution'),payFrequency:$('payFrequency'),contributionFrequency:$('contributionFrequency'),sameAsPayCycle:$('sameAsPayCycle'),currentContributionLabel:$('currentContributionLabel'),currentContributionHelp:$('currentContributionHelp'),returnRate:$('returnRate'),futureLump:$('futureLump'),futureLumpYear:$('futureLumpYear'),futureLumpTimingField:$('futureLumpTimingField'),inflationLabel:$('inflationLabel'),amountLabel:$('amountLabel'),amountHelp:$('amountHelp'),goalHelp:$('goalHelp'),resetBtn:$('resetBtn'),
     snapshotTitle:$('snapshotTitle'),timePill:$('timePill'),futureCost:$('futureCost'),futureCostNote:$('futureCostNote'),projectedPlan:$('projectedPlan'),fundingGap:$('fundingGap'),totalMonthly:$('totalMonthly'),additionalMonthly:$('additionalMonthly'),lumpToday:$('lumpToday'),fundingPct:$('fundingPct'),fundingBar:$('fundingBar'),fundingText:$('fundingText'),todayCostCard:$('todayCostCard'),futureCostCard:$('futureCostCard'),projectedCard:$('projectedCard'),additionalCard:$('additionalCard'),costChart:$('costChart'),savingsChart:$('savingsChart'),scenarioGrid:$('scenarioGrid'),
-    insightInflation:$('insightInflation'),insightInflationText:$('insightInflationText'),insightFunding:$('insightFunding'),insightFundingText:$('insightFundingText'),insightContribution:$('insightContribution'),insightContributionText:$('insightContributionText'),insightTime:$('insightTime'),insightTimeText:$('insightTimeText'),copyBtn:$('copyBtn'),reportBtn:$('reportBtn'),printReport:$('printReport')
+    insightInflation:$('insightInflation'),insightInflationText:$('insightInflationText'),insightFunding:$('insightFunding'),insightFundingText:$('insightFundingText'),insightContribution:$('insightContribution'),insightContributionText:$('insightContributionText'),insightTime:$('insightTime'),insightTimeText:$('insightTimeText'),totalContributionLabel:$('totalContributionLabel'),additionalContributionLabel:$('additionalContributionLabel'),additionalContributionCardLabel:$('additionalContributionCardLabel'),copyBtn:$('copyBtn'),reportBtn:$('reportBtn'),printReport:$('printReport')
   };
   const templates={
     education:{label:'Child education',short:'Education',goalName:'Higher education',amount:2500000,inflation:7,years:12,help:'Model tuition or education costs in today’s money.',inflabel:'Education inflation assumption'},
@@ -24,6 +24,42 @@
   };
   let goalType='education';
   let pendingRegion=L.getRegion(),pendingCurrency=L.getCurrency();
+  let payFrequencyUserOverride=false, contributionFrequencyUserOverride=false;
+  const frequencyOrder=['weekly','biweekly','semimonthly','fourweekly','monthly'];
+  const frequencyPeriods=Object.freeze({weekly:52,biweekly:26,semimonthly:24,fourweekly:13,monthly:12});
+  const frequencyBaseLabels={weekly:'Weekly',semimonthly:'Twice Monthly',fourweekly:'Every 4 Weeks',monthly:'Monthly'};
+  function frequencyProfile(regionCode=L.getRegion()){return L.regions[regionCode]||L.regions.OTHER||{};}
+  function frequencyLabel(key,regionCode=L.getRegion()){
+    if(key==='biweekly'){const style=frequencyProfile(regionCode).twoWeekLabel||'neutral';if(style==='fortnightly')return 'Fortnightly (Every 2 Weeks)';if(style==='biweekly')return 'Biweekly (Every 2 Weeks)';return 'Every 2 Weeks';}
+    return frequencyBaseLabels[key]||'Monthly';
+  }
+  function defaultFrequencyForRegion(code=L.getRegion()){return frequencyProfile(code).contributionFrequency||'monthly';}
+  function periodsPerYear(key){return frequencyPeriods[key]||12;}
+  function cadenceText(key){if(key==='weekly')return 'per week';if(key==='biweekly')return 'every 2 weeks';if(key==='semimonthly')return 'twice monthly';if(key==='fourweekly')return 'every 4 weeks';return 'per month';}
+  function frequencyName(key){return frequencyLabel(key).replace(/\s*\(Every 2 Weeks\)\s*/,'').trim();}
+  function contributionLabelText(key){if(key==='biweekly'&&frequencyName(key)==='Every 2 Weeks')return 'Current contribution every 2 weeks';if(key==='fourweekly')return 'Current contribution every 4 weeks';return `Current ${frequencyName(key).toLowerCase()} contribution`;}
+  function requiredContributionLabel(key,prefix='Total'){if(key==='biweekly'&&frequencyName(key)==='Every 2 Weeks')return `${prefix} contribution required every 2 weeks`;if(key==='fourweekly')return `${prefix} contribution required every 4 weeks`;return `${prefix} ${frequencyName(key).toLowerCase()} contribution required`;}
+  function contributionText(amount,key){return `${money(amount)} ${cadenceText(key)}`;}
+  function populateFrequencySelect(select,desired){if(!select)return;select.innerHTML=frequencyOrder.map(key=>`<option value="${key}">${frequencyLabel(key)}</option>`).join('');select.value=frequencyOrder.includes(desired)?desired:'monthly';}
+  function syncFrequencyOptions(){
+    const suggested=defaultFrequencyForRegion();
+    const payDesired=payFrequencyUserOverride?(els.payFrequency?.value||suggested):suggested;
+    populateFrequencySelect(els.payFrequency,payDesired);
+    const contributionDesired=els.sameAsPayCycle?.checked?els.payFrequency.value:(contributionFrequencyUserOverride?(els.contributionFrequency?.value||suggested):suggested);
+    populateFrequencySelect(els.contributionFrequency,contributionDesired);
+    if(els.sameAsPayCycle?.checked)els.contributionFrequency.value=els.payFrequency.value;
+    if(els.contributionFrequency)els.contributionFrequency.disabled=Boolean(els.sameAsPayCycle?.checked);
+    updateFrequencyCopy();
+  }
+  function updateFrequencyCopy(){
+    if(!els.contributionFrequency)return;const key=els.contributionFrequency.value||'monthly';
+    if(els.currentContributionLabel)els.currentContributionLabel.textContent=contributionLabelText(key);
+    if(els.currentContributionHelp)els.currentContributionHelp.textContent=`Enter how much you currently contribute ${cadenceText(key)} toward this goal.`;
+    if(els.totalContributionLabel)els.totalContributionLabel.textContent=requiredContributionLabel(key,'Total');
+    if(els.additionalContributionLabel)els.additionalContributionLabel.textContent=requiredContributionLabel(key,'Additional');
+    if(els.additionalContributionCardLabel)els.additionalContributionCardLabel.textContent=requiredContributionLabel(key,'Additional').replace(/ required$/,'');
+  }
+  function updateFutureLumpTiming(){const active=Math.max(0,num(els.futureLump))>0;if(els.futureLumpTimingField)els.futureLumpTimingField.classList.toggle('hidden',!active);if(els.futureLumpYear)els.futureLumpYear.disabled=!active;}
 
   function populateLocale(){
     const regionEntries=Object.entries(L.regions).sort(([codeA,a],[codeB,b])=>{
@@ -40,10 +76,10 @@
   els.localeMenu.addEventListener('toggle',()=>{if(els.localeMenu.open)openLocale();});
   els.regionSelect.addEventListener('change',e=>{pendingRegion=e.target.value;const p=L.regions[pendingRegion];if(p&&L.currencies[p.currency]){pendingCurrency=p.currency;els.currencySelect.value=pendingCurrency;}});
   els.currencySelect.addEventListener('change',e=>pendingCurrency=e.target.value);
-  els.localeDone.addEventListener('click',()=>{const changed=pendingRegion!==L.getRegion()||pendingCurrency!==L.getCurrency();L.setLocale(pendingRegion,pendingCurrency);els.localeMenu.open=false;if(changed) resetMoneyForLocale();});
+  els.localeDone.addEventListener('click',()=>{const regionChanged=pendingRegion!==L.getRegion(),changed=regionChanged||pendingCurrency!==L.getCurrency();if(regionChanged){payFrequencyUserOverride=false;contributionFrequencyUserOverride=false;}L.setLocale(pendingRegion,pendingCurrency);els.localeMenu.open=false;if(changed) resetMoneyForLocale();});
   document.addEventListener('click',e=>{if(els.localeMenu.open&&!els.localeMenu.contains(e.target)){els.localeMenu.open=false;}});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&els.localeMenu.open)els.localeMenu.open=false;});
-  window.addEventListener('carrowmont:localechange',()=>{updateLocaleSummary();render();});
+  window.addEventListener('carrowmont:localechange',()=>{updateLocaleSummary();syncFrequencyOptions();render();});
 
   function buildGoalTypes(){
     els.goalTypes.innerHTML=Object.entries(templates).map(([k,t])=>`<button type="button" class="goal-type ${k===goalType?'active':''}" data-goal="${k}">${t.label}<small>${k==='home'?'Down payment':k==='emergency'?'Months of expenses':'Future target'}</small></button>`).join('');
@@ -68,7 +104,7 @@
   }
   function usesIndiaDemoDefaults(){return L.getRegion()==='IN'&&L.getCurrency()==='INR';}
   function resetAll(){
-    goalType='education';els.existingSavings.value=500000;els.monthlyContribution.value=8000;els.returnRate.value=10;els.futureLump.value=0;els.futureLumpYear.value=0;applyTemplate('education',true);
+    goalType='education';els.existingSavings.value=500000;els.monthlyContribution.value=8000;els.returnRate.value=10;els.futureLump.value=0;els.futureLumpYear.value=0;payFrequencyUserOverride=false;contributionFrequencyUserOverride=false;if(els.sameAsPayCycle)els.sameAsPayCycle.checked=false;syncFrequencyOptions();applyTemplate('education',true);
     if(!usesIndiaDemoDefaults()) resetMoneyForLocale();
   }
   els.resetBtn.addEventListener('click',resetAll);
@@ -81,13 +117,13 @@
     if(goalType==='home')today=Math.max(0,num(els.propertyValue))*clamp(num(els.downPayment,20),0,100)/100;
     else if(goalType==='emergency')today=Math.max(0,num(els.monthlyExpenses))*clamp(num(els.expenseMonths,6),1,36);
     else today=Math.max(0,num(els.amountToday));
-    return {type:goalType,name:els.goalName.value.trim()||templates[goalType].goalName,years:y,inflation:infl,ret,today,existing:Math.max(0,num(els.existingSavings)),monthly:Math.max(0,num(els.monthlyContribution)),futureLump:Math.max(0,num(els.futureLump)),futureLumpYear:clamp(num(els.futureLumpYear),0,y)};
+    return {type:goalType,name:els.goalName.value.trim()||templates[goalType].goalName,years:y,inflation:infl,ret,today,existing:Math.max(0,num(els.existingSavings)),monthly:Math.max(0,num(els.monthlyContribution)),payFrequency:els.payFrequency?.value||'monthly',contributionFrequency:els.contributionFrequency?.value||'monthly',sameAsPayCycle:Boolean(els.sameAsPayCycle?.checked),futureLump:Math.max(0,num(els.futureLump)),futureLumpYear:clamp(num(els.futureLumpYear),0,y)};
   }
   function annualGrowth(v,r,y){return v*Math.pow(1+r,y);}
-  function monthlyRate(annual){return annual===0?0:Math.pow(1+annual,1/12)-1;}
-  function annuityFactor(annual,years){const n=Math.max(1,Math.round(years*12)),rm=monthlyRate(annual);return rm===0?n:(Math.pow(1+rm,n)-1)/rm;}
+  function periodicRate(annual,frequency='monthly'){const periods=periodsPerYear(frequency);return annual===0?0:Math.pow(1+annual,1/periods)-1;}
+  function annuityFactor(annual,years,frequency='monthly'){const periods=periodsPerYear(frequency),n=Math.max(1,Math.round(years*periods)),rp=periodicRate(annual,frequency);return rp===0?n:(Math.pow(1+rp,n)-1)/rp;}
   function calc(s){
-    const futureCost=annualGrowth(s.today,s.inflation,s.years);const existingFuture=annualGrowth(s.existing,s.ret,s.years);const af=annuityFactor(s.ret,s.years);const monthlyFuture=s.monthly*af;const lumpFuture=s.futureLump>0?annualGrowth(s.futureLump,s.ret,Math.max(0,s.years-s.futureLumpYear)):0;const projected=existingFuture+monthlyFuture+lumpFuture;const gap=Math.max(0,futureCost-projected);const monthlyRequired=Math.max(0,(futureCost-existingFuture-lumpFuture)/af);const additional=Math.max(0,monthlyRequired-s.monthly);const lumpToday=gap/Math.pow(1+s.ret,s.years);const funding=futureCost>0?projected/futureCost:0;return{futureCost,existingFuture,monthlyFuture,lumpFuture,projected,gap,monthlyRequired,additional,lumpToday,funding,af};
+    const futureCost=annualGrowth(s.today,s.inflation,s.years);const existingFuture=annualGrowth(s.existing,s.ret,s.years);const af=annuityFactor(s.ret,s.years,s.contributionFrequency);const monthlyFuture=s.monthly*af;const lumpFuture=s.futureLump>0?annualGrowth(s.futureLump,s.ret,Math.max(0,s.years-s.futureLumpYear)):0;const projected=existingFuture+monthlyFuture+lumpFuture;const gap=Math.max(0,futureCost-projected);const monthlyRequired=Math.max(0,(futureCost-existingFuture-lumpFuture)/af);const additional=Math.max(0,monthlyRequired-s.monthly);const lumpToday=gap/Math.pow(1+s.ret,s.years);const funding=futureCost>0?projected/futureCost:0;return{futureCost,existingFuture,monthlyFuture,lumpFuture,projected,gap,monthlyRequired,additional,lumpToday,funding,af};
   }
   const money=v=>L.formatMoney(v,{maximumFractionDigits:0});
   const compact=v=>L.formatCompactMoney(v,{maximumFractionDigits:2});
@@ -95,20 +131,20 @@
   function esc(v){return String(v).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));}
 
   function render(){
-    const s=state(),c=calc(s);updateLocaleSummary();
-    els.snapshotTitle.textContent=s.name;els.timePill.textContent=`${s.years} ${s.years===1?'year':'years'} to goal`;els.futureCost.textContent=compact(c.futureCost);els.projectedPlan.textContent=compact(c.projected);els.fundingGap.textContent=c.gap>0?compact(c.gap):'No gap';els.totalMonthly.textContent=`${money(c.monthlyRequired)}/mo`;els.additionalMonthly.textContent=c.additional>0?`${money(c.additional)}/mo`:'No increase required';els.lumpToday.textContent=c.lumpToday>0?money(c.lumpToday):'No additional lump sum';
+    updateFutureLumpTiming();const s=state(),c=calc(s);updateLocaleSummary();updateFrequencyCopy();
+    els.snapshotTitle.textContent=s.name;els.timePill.textContent=`${s.years} ${s.years===1?'year':'years'} to goal`;els.futureCost.textContent=compact(c.futureCost);els.projectedPlan.textContent=compact(c.projected);els.fundingGap.textContent=c.gap>0?compact(c.gap):'No gap';els.totalMonthly.textContent=contributionText(c.monthlyRequired,s.contributionFrequency);els.additionalMonthly.textContent=c.additional>0?contributionText(c.additional,s.contributionFrequency):'No increase required';els.lumpToday.textContent=c.lumpToday>0?money(c.lumpToday):'No one-time investment required';
     const fundPct=Math.min(999,c.funding*100);els.fundingPct.textContent=pct(Math.min(100,fundPct));els.fundingBar.style.width=`${Math.min(100,fundPct)}%`;els.fundingText.textContent=c.funding>=1?`Under these assumptions, your current plan reaches or exceeds the modelled goal.`:`Your current savings plan is projected to cover about ${Math.round(fundPct)}% of the modelled goal.`;
-    els.todayCostCard.textContent=compact(s.today);els.futureCostCard.textContent=compact(c.futureCost);els.projectedCard.textContent=compact(c.projected);els.additionalCard.textContent=c.additional>0?`${money(c.additional)}/mo`:`${money(0)}/mo`;
+    els.todayCostCard.textContent=compact(s.today);els.futureCostCard.textContent=compact(c.futureCost);els.projectedCard.textContent=compact(c.projected);els.additionalCard.textContent=c.additional>0?contributionText(c.additional,s.contributionFrequency):contributionText(0,s.contributionFrequency);
     renderInsights(s,c);renderScenarios(s);renderCostChart(s);renderSavingsChart(s);buildReport(s,c);
   }
   function renderInsights(s,c){
     const increase=s.today>0?(c.futureCost/s.today-1)*100:0;els.insightInflation.textContent=`+${Math.round(increase)}%`;els.insightInflationText.textContent=`At ${ (s.inflation*100).toFixed(1)}% annual inflation, the modelled cost grows from ${compact(s.today)} today to ${compact(c.futureCost)} in ${s.years} years.`;
     els.insightFunding.textContent=`${Math.min(100,Math.round(c.funding*100))}% funded`;els.insightFundingText.textContent=`Existing savings and current contributions are projected to reach ${compact(c.projected)} by the goal date.`;
-    els.insightContribution.textContent=c.additional>0?`+${money(c.additional)}/mo`:'No increase required';els.insightContributionText.textContent=c.additional>0?`On top of your current ${money(s.monthly)}/month contribution, under these assumptions.`:'Your current contribution is enough to meet or exceed the modelled target under these assumptions.';
-    const later=calc(state(s.years+2));const diff=c.monthlyRequired-later.monthlyRequired;els.insightTime.textContent=`2 extra years`;els.insightTimeText.textContent=diff>=0?`Moving the goal two years later reduces the modelled monthly requirement by about ${money(diff)}/month, while the nominal goal cost also rises with inflation.`:`Moving the goal two years later increases the modelled monthly requirement by about ${money(Math.abs(diff))}/month under these assumptions because the goal cost is growing faster than the investment assumption.`;
+    els.insightContribution.textContent=c.additional>0?`+${contributionText(c.additional,s.contributionFrequency)}`:'No increase required';els.insightContributionText.textContent=c.additional>0?`On top of your current ${contributionText(s.monthly,s.contributionFrequency)} contribution, under these assumptions.`:'Your current contribution is enough to meet or exceed the modelled target under these assumptions.';
+    const later=calc(state(s.years+2));const diff=c.monthlyRequired-later.monthlyRequired;els.insightTime.textContent=`2 extra years`;els.insightTimeText.textContent=diff>=0?`Moving the goal two years later reduces the modelled contribution requirement by about ${contributionText(diff,s.contributionFrequency)}, while the nominal goal cost also rises with inflation.`:`Moving the goal two years later increases the modelled contribution requirement by about ${contributionText(Math.abs(diff),s.contributionFrequency)} under these assumptions because the goal cost is growing faster than the investment assumption.`;
   }
   function renderScenarios(s){
-    const ys=[Math.max(1,s.years-2),s.years,Math.min(50,s.years+2)];els.scenarioGrid.innerHTML=ys.map(y=>{const st=state(y),c=calc(st),current=y===s.years;return `<article class="scenario ${current?'current':''}"><div class="tag">${current?`Current choice · ${y} years`:`Goal in ${y} years`}</div><strong class="big">${compact(c.futureCost)}</strong><dl><div><dt>Years to save</dt><dd>${y}</dd></div><div><dt>Total monthly required</dt><dd>${money(c.monthlyRequired)}</dd></div><div><dt>Projected funding</dt><dd>${Math.min(100,Math.round(c.funding*100))}%</dd></div></dl></article>`;}).join('');
+    const ys=[Math.max(1,s.years-2),s.years,Math.min(50,s.years+2)];els.scenarioGrid.innerHTML=ys.map(y=>{const st=state(y),c=calc(st),current=y===s.years;return `<article class="scenario ${current?'current':''}"><div class="tag">${current?`Current choice · ${y} years`:`Goal in ${y} years`}</div><strong class="big">${compact(c.futureCost)}</strong><dl><div><dt>Years to save</dt><dd>${y}</dd></div><div><dt>Contribution required</dt><dd>${contributionText(c.monthlyRequired,st.contributionFrequency)}</dd></div><div><dt>Projected funding</dt><dd>${Math.min(100,Math.round(c.funding*100))}%</dd></div></dl></article>`;}).join('');
   }
   function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v)));const n=v/p;const m=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;return m*p;}
   function chartBase(svg,maxVal,years){const W=800,H=300,l=80,r=20,t=20,b=42,iw=W-l-r,ih=H-t-b,x=y=>l+(y/years)*iw,yy=v=>t+ih-(v/maxVal)*ih;let h='';for(let i=0;i<=4;i++){const v=maxVal*i/4,py=yy(v);h+=`<line class="gridline" x1="${l}" x2="${W-r}" y1="${py}" y2="${py}"/><text class="axis" x="${l-10}" y="${py+4}" text-anchor="end">${compact(v)}</text>`;}[0,Math.round(years/2),years].forEach(y=>h+=`<text class="axis" x="${x(y)}" y="${H-14}" text-anchor="middle">${y===0?'Today':`Year ${Number.isInteger(y)?y:y.toFixed(1)}`}</text>`);svg.innerHTML=h;return{x,yy,W,H,l,r,t,b,iw,ih,years};}
@@ -139,10 +175,13 @@
     svg.onpointercancel=ev=>{if(ev.pointerType!=='touch')hide();};
   }
   function renderCostChart(s){const pts=chartYears(s.years).map(y=>({y,v:annualGrowth(s.today,s.inflation,y)}));const max=niceMax(Math.max(...pts.map(p=>p.v))*1.08),g=chartBase(els.costChart,max,s.years),path=pts.map((p,i)=>`${i?'L':'M'}${g.x(p.y)},${g.yy(p.v)}`).join(' ');els.costChart.innerHTML+=`<path class="goal-line" d="${path}"/><circle class="dot-goal" cx="${g.x(s.years)}" cy="${g.yy(pts[pts.length-1].v)}" r="5"/>`;bindChartInteraction(els.costChart,[{label:'Goal cost',color:'#173d5c',points:pts}],g);}
-  function planAt(s,y){const existing=annualGrowth(s.existing,s.ret,y),af=annuityFactor(s.ret,y),monthly=s.monthly*af,lump=(s.futureLump>0&&y>=s.futureLumpYear)?annualGrowth(s.futureLump,s.ret,y-s.futureLumpYear):0;return existing+monthly+lump;}
+  function planAt(s,y){const existing=annualGrowth(s.existing,s.ret,y),af=annuityFactor(s.ret,y,s.contributionFrequency),monthly=s.monthly*af,lump=(s.futureLump>0&&y>=s.futureLumpYear)?annualGrowth(s.futureLump,s.ret,y-s.futureLumpYear):0;return existing+monthly+lump;}
   function renderSavingsChart(s){const pts=chartYears(s.years).map(y=>({y,goal:annualGrowth(s.today,s.inflation,y),plan:y===0?s.existing:planAt(s,y)}));const max=niceMax(Math.max(...pts.flatMap(p=>[p.goal,p.plan]))*1.08),g=chartBase(els.savingsChart,max,s.years),goalPts=pts.map(p=>({y:p.y,v:p.goal})),planPts=pts.map(p=>({y:p.y,v:p.plan})),p1=goalPts.map((p,i)=>`${i?'L':'M'}${g.x(p.y)},${g.yy(p.v)}`).join(' '),p2=planPts.map((p,i)=>`${i?'L':'M'}${g.x(p.y)},${g.yy(p.v)}`).join(' ');els.savingsChart.innerHTML+=`<path class="goal-line" d="${p1}"/><path class="plan-line" d="${p2}"/><circle class="dot-goal" cx="${g.x(s.years)}" cy="${g.yy(goalPts.at(-1).v)}" r="5"/><circle class="dot-plan" cx="${g.x(s.years)}" cy="${g.yy(planPts.at(-1).v)}" r="5"/>`;bindChartInteraction(els.savingsChart,[{label:'Goal path',color:'#173d5c',points:goalPts},{label:'Your current plan',color:'#0e8b80',points:planPts}],g,(vals)=>{const gap=vals[0].value-vals[1].value;return gap>=0?`<span>Funding gap: ${esc(compact(gap))}</span>`:`<span>Above goal path: ${esc(compact(Math.abs(gap)))}</span>`;});}
 
   document.querySelectorAll('input').forEach(i=>i.addEventListener('input',render));els.goalName.addEventListener('input',render);
+  els.payFrequency?.addEventListener('change',()=>{payFrequencyUserOverride=true;if(els.sameAsPayCycle?.checked){els.contributionFrequency.value=els.payFrequency.value;}updateFrequencyCopy();render();});
+  els.contributionFrequency?.addEventListener('change',()=>{contributionFrequencyUserOverride=true;updateFrequencyCopy();render();});
+  els.sameAsPayCycle?.addEventListener('change',()=>{if(els.sameAsPayCycle.checked){contributionFrequencyUserOverride=false;els.contributionFrequency.value=els.payFrequency.value;}else{contributionFrequencyUserOverride=true;}els.contributionFrequency.disabled=els.sameAsPayCycle.checked;updateFrequencyCopy();render();});
   function currencyCode(){return L.getCurrency();}
   function regionLabel(){return L.getProfile().label;}
   function reportRow(label,value,valueClass=''){return `<tr><th>${esc(label)}</th><td class="${valueClass}">${esc(value)}</td></tr>`;}
@@ -166,9 +205,10 @@
       ['Goal type',templates[s.type].label],['Goal name',s.name],['Country / region',regionLabel()],['Currency',currencyCode()],
       ['Years until goal',`${s.years}`],...goalSpecificAssumptions(s),
       [templates[s.type].inflabel,`${(s.inflation*100).toFixed(1)}% p.a.`],['Expected annual investment return',`${(s.ret*100).toFixed(1)}% p.a.`],
-      ['Existing savings for this goal',money(s.existing)],['Current monthly contribution',`${money(s.monthly)}/mo`]
+      ['Pay frequency',frequencyLabel(s.payFrequency)],['Savings / contribution frequency',frequencyLabel(s.contributionFrequency)],
+      ['Existing savings for this goal',money(s.existing)],[contributionLabelText(s.contributionFrequency),contributionText(s.monthly,s.contributionFrequency)]
     ];
-    if(s.futureLump>0){rows.push(['Future lump sum',money(s.futureLump)]);rows.push(['Years until future lump sum',`${s.futureLumpYear}`]);}
+    if(s.futureLump>0){rows.push(['Optional future one-time investment',money(s.futureLump)]);rows.push(['When will this investment be made?',`${s.futureLumpYear} years from now`]);}
     return rows;
   }
   function reportScenarioResults(s){
@@ -254,19 +294,20 @@
     $('reportFundingStatus').textContent=status[0];$('reportExecutiveNote').textContent=status[1];
     $('reportTodayCost').textContent=compact(s.today);$('reportYears').textContent=`${s.years}`;$('reportFundingPct').textContent=`${Math.min(100,Math.round(fundingPct))}%`;
     $('reportGapLabel').textContent=surplus>0?`Projected surplus at goal date (future ${currencyCode()})`:`Funding gap at goal date (future ${currencyCode()})`;$('reportGap').textContent=surplus>0?compact(surplus):(c.gap>0?compact(c.gap):'No gap');
-    $('reportMonthlyRequired').textContent=`${money(c.monthlyRequired)}/mo`;$('reportLumpToday').textContent=c.lumpToday>0?compact(c.lumpToday):'No additional lump sum';
-    $('reportCurrentMonthly').textContent=`${money(s.monthly)}/mo`;$('reportNeededMonthly').textContent=`${money(c.monthlyRequired)}/mo`;$('reportAdditionalMonthly').textContent=c.additional>0?`${money(c.additional)}/mo`:`${money(0)}/mo`;
+    $('reportRequiredLabel').textContent=requiredContributionLabel(s.contributionFrequency,'Total')+' from now';$('reportMonthlyRequired').textContent=contributionText(c.monthlyRequired,s.contributionFrequency);$('reportLumpToday').textContent=c.lumpToday>0?compact(c.lumpToday):'No one-time investment required';
+    $('reportActionHeading').textContent=`${frequencyName(s.contributionFrequency)} contribution required by the model`; $('reportCurrentContributionLabel').textContent=contributionLabelText(s.contributionFrequency);$('reportNeededContributionLabel').textContent=requiredContributionLabel(s.contributionFrequency,'Total')+' from now';$('reportAdditionalContributionLabel').textContent=requiredContributionLabel(s.contributionFrequency,'Additional');
+    $('reportCurrentMonthly').textContent=contributionText(s.monthly,s.contributionFrequency);$('reportNeededMonthly').textContent=contributionText(c.monthlyRequired,s.contributionFrequency);$('reportAdditionalMonthly').textContent=c.additional>0?contributionText(c.additional,s.contributionFrequency):contributionText(0,s.contributionFrequency);
     const ribbon=$('reportAdditionalRibbon');if(ribbon){ribbon.classList.toggle('report-action-ribbon-gap',c.additional>0);ribbon.classList.toggle('report-action-ribbon-ok',!(c.additional>0));}
-    $('reportActionNarrative').textContent=c.additional>0?`Under the entered assumptions, increasing the monthly contribution from ${money(s.monthly)} to about ${money(c.monthlyRequired)} may close the modelled funding gap by the selected goal date. This is an illustration, not a recommendation or guarantee.`:`Under the entered assumptions, the current monthly contribution is at or above the amount required by the model for the selected goal date. This is an illustration, not a recommendation or guarantee.`;
-    const sourceRows=[['Future value of existing savings at goal date',money(c.existingFuture)],['Future value of current monthly contributions at goal date',money(c.monthlyFuture)]];
-    if(s.futureLump>0)sourceRows.push(['Future value of entered future lump sum at goal date',money(c.lumpFuture)]);
+    $('reportActionNarrative').textContent=c.additional>0?`Under the entered assumptions, increasing the contribution from ${contributionText(s.monthly,s.contributionFrequency)} to about ${contributionText(c.monthlyRequired,s.contributionFrequency)} may close the modelled funding gap by the selected goal date. This is an illustration, not a recommendation or guarantee.`:`Under the entered assumptions, the current contribution is at or above the amount required by the model for the selected goal date. This is an illustration, not a recommendation or guarantee.`;
+    const sourceRows=[['Future value of existing savings at goal date',money(c.existingFuture)],[`Future value of current contributions (${frequencyLabel(s.contributionFrequency)}) at goal date`,money(c.monthlyFuture)]];
+    if(s.futureLump>0)sourceRows.push(['Future value of entered future one-time investment at goal date',money(c.lumpFuture)]);
     sourceRows.push([`Projected current-plan value at goal date (future ${currencyCode()})`,money(c.projected)]);
     $('reportFundingSources').innerHTML=sourceRows.map(([a,b],i)=>reportRow(a,b,i===sourceRows.length-1?'report-total-value':'')).join('');
     $('reportInflationImpact').innerHTML=[[`Goal amount today`,money(s.today)],[`Goal cost at selected date (future ${currencyCode()})`,money(c.futureCost)],['Nominal amount multiple',`${model.extras.priceGrowthMultiple.toFixed(2)}x`],[templates[s.type].inflabel,`${(s.inflation*100).toFixed(1)}% p.a.`]].map(([a,b])=>reportRow(a,b)).join('');
     $('reportInflationNarrative').textContent=`Today\'s money is the amount entered now. Future ${currencyCode()} is the modelled nominal amount at the selected goal date after applying the entered inflation or price-growth assumption.`;
     $('reportAssumptions').innerHTML=model.assumptions.map(a=>reportRow(a.label,a.value)).join('');
-    $('reportScenarios').innerHTML=model.extras.scenarios.map(x=>{const current=x.years===s.years,fc=x.result.futureCost,proj=x.result.projected,p=fc>0?Math.min(100,Math.round(proj/fc*100)):0;return `<tr class="${current?'report-scenario-selected':''}"><td>${x.years} years${current?' (selected)':''}</td><td>${esc(money(fc))}</td><td>${esc(money(x.result.monthlyRequired))}</td><td>${p}%</td></tr>`;}).join('');
-    $('reportScenarioNote').textContent=`Projected funding is based on the current plan - ${money(s.existing)} already saved plus ${money(s.monthly)}/month ongoing contribution${s.futureLump>0?` and the entered future lump sum of ${money(s.futureLump)}`:''}. It does not assume the monthly investment required shown in the previous column.`;
+    $('reportScenarios').innerHTML=model.extras.scenarios.map(x=>{const current=x.years===s.years,fc=x.result.futureCost,proj=x.result.projected,p=fc>0?Math.min(100,Math.round(proj/fc*100)):0;return `<tr class="${current?'report-scenario-selected':''}"><td>${x.years} years${current?' (selected)':''}</td><td>${esc(money(fc))}</td><td>${esc(contributionText(x.result.monthlyRequired,s.contributionFrequency))}</td><td>${p}%</td></tr>`;}).join('');
+    $('reportScenarioNote').textContent=`Projected funding is based on the current plan - ${money(s.existing)} already saved plus ${contributionText(s.monthly,s.contributionFrequency)} ongoing contribution${s.futureLump>0?` and the entered future one-time investment of ${money(s.futureLump)}`:''}. It does not assume the contribution required shown in the previous column.`;
     $('reportMethodologyLabel').textContent=`Methodology: ${model.methodology.label||'Current Goal Planner methodology'}`;$('reportMethodologyUrl').textContent=(model.methodology.url||'https://carrowmont.com/goal-planner/#methodology').replace(/^https?:\/\//,'');
     renderReportCostChart($('reportCostChart'),s);
     const milestones=reportMilestoneYears(s.years),midYear=milestones.length>2?milestones[1]:s.years;
@@ -274,12 +315,12 @@
     $('reportCostChartNote').textContent=`How to read this chart: the left edge is today, so ${compact(s.today)} is a current amount. Every later point is the modelled nominal future-${currencyCode()} amount at that year. By year ${s.years}, the goal is estimated at ${compact(c.futureCost)} under the entered ${(s.inflation*100).toFixed(1)}% annual inflation / price-growth assumption.`;
     renderReportSavingsChart($('reportSavingsChart'),s,c);
     $('reportSavingsChartStats').innerHTML=[[`Goal at year ${s.years}`,compact(c.futureCost)],[`Current plan at year ${s.years}`,compact(c.projected)],[surplus>0?'Projected surplus':'Funding gap',compact(surplus>0?surplus:c.gap)],['Projected funding from current plan',`${Math.min(100,Math.round(fundingPct))}%`]].map(([label,value])=>`<div class="report-chart-stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
-    $('reportSavingsChartNote').textContent=`How to read this chart: the blue line is the modelled goal-cost path. The green line is the value of your current plan - existing savings, current monthly contributions and any entered future lump sum - before any increase. At the selected goal date the current plan is projected at ${compact(c.projected)} versus a goal of ${compact(c.futureCost)}, which is about ${Math.min(100,Math.round(fundingPct))}% funded${surplus>0?` with a projected surplus of ${compact(surplus)}`:` with a funding gap of ${compact(c.gap)}`}.`;
+    $('reportSavingsChartNote').textContent=`How to read this chart: the blue line is the modelled goal-cost path. The green line is the value of your current plan - existing savings, recurring contributions at the selected frequency and any entered future one-time investment - before any increase. At the selected goal date the current plan is projected at ${compact(c.projected)} versus a goal of ${compact(c.futureCost)}, which is about ${Math.min(100,Math.round(fundingPct))}% funded${surplus>0?` with a projected surplus of ${compact(surplus)}`:` with a funding gap of ${compact(c.gap)}`}.`;
     return model;
   }
   async function copySummary(){
     const s=state(),c=calc(s),m=buildGoalReportModel(s,c),p=c.futureCost>0?Math.min(100,Math.round(c.projected/c.futureCost*100)):0;
-    const txt=[`CARROWMONT GOAL PLANNING SUMMARY`,``, `Goal: ${s.name}`,`Goal type: ${templates[s.type].label}`,`Country / region: ${regionLabel()}`,`Currency: ${currencyCode()}`,`Years to goal: ${s.years}`,`Goal cost today: ${money(s.today)}`,`Inflation / price-growth assumption: ${(s.inflation*100).toFixed(1)}%`,`Expected investment return: ${(s.ret*100).toFixed(1)}%`,``, `Estimated goal cost at goal date: ${money(c.futureCost)}`,`Projected value of current plan at goal date: ${money(c.projected)}`,`Projected funding from current plan: ${p}%`,`Funding gap: ${money(c.gap)}`,`Current monthly contribution: ${money(s.monthly)}`,`Total monthly investment required: ${money(c.monthlyRequired)}`,`Additional monthly investment required: ${money(c.additional)}`,`Alternative additional lump sum today: ${money(c.lumpToday)}`,``, `Calculated using ${m.methodology.label||'the current Goal Planner methodology'}.`,`Illustrative estimate only. Actual inflation, investment returns, taxes, fees and future prices may differ.`,`carrowmont.com`].join('\n');
+    const txt=[`CARROWMONT GOAL PLANNING SUMMARY`,``, `Goal: ${s.name}`,`Goal type: ${templates[s.type].label}`,`Country / region: ${regionLabel()}`,`Currency: ${currencyCode()}`,`Years to goal: ${s.years}`,`Goal cost today: ${money(s.today)}`,`Inflation / price-growth assumption: ${(s.inflation*100).toFixed(1)}%`,`Expected investment return: ${(s.ret*100).toFixed(1)}%`,``, `Estimated goal cost at goal date: ${money(c.futureCost)}`,`Projected value of current plan at goal date: ${money(c.projected)}`,`Projected funding from current plan: ${p}%`,`Funding gap: ${money(c.gap)}`,`Pay frequency: ${frequencyLabel(s.payFrequency)}`,`Savings / contribution frequency: ${frequencyLabel(s.contributionFrequency)}`,`${contributionLabelText(s.contributionFrequency)}: ${contributionText(s.monthly,s.contributionFrequency)}`,`${requiredContributionLabel(s.contributionFrequency,'Total')}: ${contributionText(c.monthlyRequired,s.contributionFrequency)}`,`${requiredContributionLabel(s.contributionFrequency,'Additional')}: ${contributionText(c.additional,s.contributionFrequency)}`,`Alternative one-time investment today: ${money(c.lumpToday)}`,``, `Calculated using ${m.methodology.label||'the current Goal Planner methodology'}.`,`Illustrative estimate only. Actual inflation, investment returns, taxes, fees and future prices may differ.`,`carrowmont.com`].join('\n');
     try{await navigator.clipboard.writeText(txt);els.copyBtn.textContent='Copied';setTimeout(()=>els.copyBtn.textContent='Copy Summary',1400);}catch(_){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
   }
   async function downloadGoalReport(){
@@ -308,6 +349,6 @@
   els.reportBtn.addEventListener('click',downloadGoalReport);
 
 
-  populateLocale();buildGoalTypes();showDynamic();
+  populateLocale();syncFrequencyOptions();buildGoalTypes();showDynamic();updateFutureLumpTiming();
   if(usesIndiaDemoDefaults()) render(); else resetMoneyForLocale();
 })();
