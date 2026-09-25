@@ -2,6 +2,7 @@
   'use strict';
 
   const P = () => window.CarrowmontPdfExport;
+  const S = () => window.CarrowmontReportStandard;
   const C = {
     ink:'#13233a', navy:'#123f5f', navy2:'#174e70', teal:'#0e827a', tealDark:'#086b64', muted:'#4a5e75',
     line:'#dce4ea', pale:'#e6f5f3', note:'#f3f9f8', action:'#f5fbfa', amber:'#fff2d9', amberLine:'#e7c77e', amberInk:'#5c4312',
@@ -117,43 +118,45 @@
   async function drawSavingsChart(ctx,root,y){
     P().text(ctx,'Current plan vs goal path',M,y,{size:15,weight:850,color:C.ink});const cy=y+14,ch=230;card(ctx,M,cy,CW,ch,C.white,'#e1e7ec',9);await P().drawSvgElement(ctx,q(root,'#reportSavingsChart svg'),M+4,cy+4,CW-8,ch-8);const sy=cy+ch+8;const end=drawStats(ctx,statItems(root,'#reportSavingsChartStats'),sy,4);drawNote(ctx,txt(root,'#reportSavingsChartNote'),end+8,72);return end+80;
   }
-  function drawMethodology(ctx,root,y){
-    const h=168;card(ctx,M,y,CW,h,'#f7fafb',C.line,9);P().text(ctx,'Methodology & important information',M+12,y+27,{size:16,weight:850,color:C.ink});hline(ctx,M+12,M+CW-12,y+39,'#c8d0d6',1);
-    const paras=Array.from(q(root,'.report-notes')?.querySelectorAll('p')||[]).map(p=>(p.textContent||'').replace(/\s+/g,' ').trim());let yy=y+58;
-    yy=P().wrappedText(ctx,paras[0]||'',M+12,yy,CW-24,{size:8.7,lineHeight:12,weight:400,color:C.muted,maxLines:3})+16;
-    yy=P().wrappedText(ctx,paras[1]||'',M+12,yy,CW-24,{size:8.7,lineHeight:12,weight:400,color:C.muted,maxLines:3})+16;
-    P().wrappedText(ctx,paras[2]||'',M+12,yy,CW-24,{size:8.5,lineHeight:11.5,weight:600,color:C.muted,maxLines:2});
-    hline(ctx,M+12,M+CW-12,y+h-38,C.line,1);P().text(ctx,'CARROWMONT',M+12,y+h-19,{size:10,weight:900,color:C.teal});P().text(ctx,'Financial Planning, Tools & Learning · carrowmont.com',M+CW-12,y+h-19,{size:9,weight:400,color:C.muted,align:'right'});
+  function reportGuidePage(root){
+    const methodLabel=txt(root,'#reportMethodologyLabel').replace(/^Methodology:\s*/i,'')||'Current Goal Planner methodology';
+    const methodUrl=txt(root,'#reportMethodologyUrl')||'carrowmont.com/goal-planner/#methodology';
+    return S().guidePage({
+      reportTitle:'Goal Planning Report',
+      preparedFrom:'Carrowmont Goal Planner',
+      howToRead:'Start with the estimated future goal cost and the projected value of the current plan. Then review the funding gap, the modelled monthly investment required and the alternative scenarios for reaching the same goal.',
+      methodology:[
+        ['Future goal cost','The amount entered today is grown using the selected inflation or price-growth assumption. If a future target is entered directly, that amount is used instead.'],
+        ['Current-plan projection','Existing savings, current monthly contributions and any entered future lump sum are projected using the selected investment-return assumption.'],
+        ['Funding gap','The difference between the modelled future goal cost and the projected value of the current plan at the selected goal date.'],
+        ['Required monthly investment','The modelled starting monthly contribution from now that would reach the selected goal date under the entered assumptions.'],
+        ['Alternative lump sum','An illustrative additional amount today that may close the same modelled gap under the selected investment-return assumption.']
+      ],
+      terminology:[
+        ['Future goal cost','The nominal amount estimated to be needed at the goal date.'],
+        ['Projected current plan','The modelled future value of existing savings plus the contributions and lump sums entered.'],
+        ['Projected funding','The proportion of the future goal cost covered by the current plan before increasing the monthly contribution.'],
+        ['Funding gap','The amount by which the projected current plan falls short of the modelled goal cost.'],
+        ['Goal-date comparison','Alternative goal dates shown with their corresponding future cost, monthly investment requirement and projected funding.']
+      ],
+      assumptions:'Inflation and investment returns are constant modelling assumptions. Country and currency selection control formatting and do not perform foreign-exchange conversion.',
+      disclaimer:'This report is an educational planning illustration based entirely on the information and assumptions entered. It does not predict inflation, investment returns, taxes, fees or future prices and is not individualized investment, financial, tax, legal, accounting or insurance advice. Actual outcomes can differ materially.',
+      methodologyMeta:methodLabel,
+      methodologyUrl:methodUrl,
+      contact:'contact@carrowmont.com'
+    });
   }
 
   function toolsPage(){
-    const pg=page(),ctx=pg.ctx;
-    P().text(ctx,'CARROWMONT',M,58,{size:15,weight:900,color:C.teal});
-    P().text(ctx,'Continue planning with Carrowmont',M,101,{size:27,weight:900,color:C.ink});
-    P().wrappedText(ctx,'Your goal plan is one part of a broader financial plan. Try these other Carrowmont tools to explore retirement, SIP investing, financial independence and the effect of inflation.',M,130,CW,{size:11,lineHeight:16,weight:500,color:C.muted,maxLines:3});
-    hline(ctx,M,W-M,178,C.navy,2);
-    const tools=[
-      {title:'Retirement Planner',desc:'Model retirement spending, income, current savings and the corpus that may be required for the retirement lifestyle you enter.',url:'carrowmont.com/retirement-calculator/'},
-      {title:'SIP Calculator',desc:'Model SIP future value, calculate a SIP required for a goal, compare step-up SIP with fixed SIP, or estimate time to a target corpus.',url:'carrowmont.com/sip-calculator/'},
-      {title:'Financial Independence',desc:'Estimate a spending-based financial-independence target and compare it with your current investment path and target age.',url:'carrowmont.com/financial-independence/'},
-      {title:'Inflation Calculator',desc:'See how inflation may change future costs and purchasing power across different time horizons and currencies.',url:'carrowmont.com/inflation-calculator/'}
-    ];
-    const gap=16,cw=(CW-gap)/2,ch=162;
-    tools.forEach((t,i)=>{const col=i%2,row=Math.floor(i/2),x=M+col*(cw+gap),y=210+row*(ch+18);card(ctx,x,y,cw,ch,C.white,C.line,13);P().text(ctx,t.title,x+16,y+32,{size:15,weight:900,color:C.ink});P().wrappedText(ctx,t.desc,x+16,y+59,cw-32,{size:10,lineHeight:14,weight:500,color:C.muted,maxLines:4});P().text(ctx,t.url,x+16,y+139,{size:9.5,weight:800,color:C.tealDark});});
-    card(ctx,M,586,CW,78,C.pale,'#b8ddd8',12);
-    P().text(ctx,'Explore all Carrowmont tools',M+16,616,{size:14,weight:900,color:C.tealDark});
-    P().wrappedText(ctx,'Visit carrowmont.com to continue your planning. Carrowmont tools are educational illustrations and do not guarantee financial or investment outcomes.',M+16,641,CW-32,{size:9.7,lineHeight:13.5,weight:500,color:C.ink,maxLines:2});
-    P().text(ctx,'CARROWMONT',M,H-40,{size:10,weight:900,color:C.teal});
-    P().text(ctx,'Financial Planning, Tools & Learning - carrowmont.com',W-M,H-40,{size:9.3,weight:500,color:C.muted,align:'right'});
-    return pg.canvas;
+    return S().continuePlanningPage({currentTool:'goal',intro:`Your goal plan is one part of a broader financial plan. Try these other Carrowmont tools to explore retirement, ${S().investmentIdentity().planningPhrase}, financial independence and the effect of inflation.`});
   }
 
   async function render(reportRoot){
     if(!reportRoot)throw new Error('Goal report content is unavailable.');
     const p1=page(),c1=p1.ctx;drawHeader(c1,reportRoot);drawGoalTitle(c1,reportRoot);drawHero(c1,reportRoot);drawExecutive(c1,reportRoot);drawSummary(c1,reportRoot);drawAction(c1,reportRoot);drawTwoCol(c1,reportRoot);
     const p2=page(),c2=p2.ctx;let y=drawAssumptions(c2,reportRoot)+35;y=drawScenario(c2,reportRoot,y)+34;drawSectionHeading(c2,'Goal planning visuals',y);P().wrappedText(c2,'These charts show how the goal cost may change and how the current savings plan compares with the goal path.',M,y+29,CW,{size:9.2,lineHeight:12,weight:400,color:C.muted,maxLines:2});await drawCostChart(c2,reportRoot,y+55);
-    const p3=page(),c3=p3.ctx;const end=await drawSavingsChart(c3,reportRoot,46);drawMethodology(c3,reportRoot,end+30);
-    return [p1.canvas,p2.canvas,p3.canvas,toolsPage()];
+    const p3=page(),c3=p3.ctx;await drawSavingsChart(c3,reportRoot,46);
+    return [p1.canvas,p2.canvas,p3.canvas,reportGuidePage(reportRoot),toolsPage()];
   }
 
   window.CarrowmontGoalPdfRenderer={render};
