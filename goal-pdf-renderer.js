@@ -65,17 +65,17 @@
   function drawAction(ctx,root){
     const y=626,h=208; card(ctx,M,y,CW,h,C.action,'#cfe5e1',10);
     P().text(ctx,'WHAT YOU CAN CHANGE',M+12,y+19,{size:8.5,weight:900,color:C.teal});
-    P().text(ctx,'Monthly investment required by the model',M+12,y+39,{size:15.5,weight:850,color:C.ink});
+    P().text(ctx,txt(root,'#reportActionHeading')||'Contribution required by the model',M+12,y+39,{size:15.5,weight:850,color:C.ink});
     hline(ctx,M+12,M+319,y+49,'#c8d3d9',1);
     P().text(ctx,'Same assumptions - selected goal date',M+CW-12,y+18,{size:9,weight:400,color:C.muted,align:'right'});
-    const current=txt(root,'#reportCurrentMonthly'),needed=txt(root,'#reportNeededMonthly');
+    const current=txt(root,'#reportCurrentMonthly'),needed=txt(root,'#reportNeededMonthly');const currentLabel=txt(root,'#reportCurrentContributionLabel')||'Current contribution',neededLabel=txt(root,'#reportNeededContributionLabel')||'Total contribution required from now';
     const bx=M+12,by=y+65,bgap=10,bw=(CW-24-bgap)/2,bh=57;
     [
-      ['Current monthly contribution',current,bx],['Total monthly investment required from now',needed,bx+bw+bgap]
+      [currentLabel,current,bx],[neededLabel,needed,bx+bw+bgap]
     ].forEach(([label,value,x])=>{card(ctx,x,by,bw,bh,C.white,'#dce8e6',8);P().wrappedText(ctx,label,x+10,by+19,bw-20,{size:9,lineHeight:11,weight:400,color:'#4d6177',maxLines:2});P().text(ctx,value,x+10,by+47,{size:13,weight:850,color:C.ink});});
     const ribbon=q(root,'#reportAdditionalRibbon'),isGap=ribbon?.classList.contains('report-action-ribbon-gap');const ry=by+66,rh=49;
     card(ctx,bx,ry,CW-24,rh,isGap?C.amber:'#e8f6f2',isGap?C.amberLine:'#b7ded4',9);
-    P().text(ctx,'Additional monthly investment required',bx+12,ry+19,{size:9.5,weight:850,color:isGap?C.amberInk:'#075f58'});
+    P().text(ctx,txt(root,'#reportAdditionalContributionLabel')||'Additional contribution required',bx+12,ry+19,{size:9.5,weight:850,color:isGap?C.amberInk:'#075f58'});
     P().text(ctx,'Key action under the selected assumptions',bx+12,ry+35,{size:8.4,weight:400,color:isGap?'#745c27':'#3e6d68'});
     P().text(ctx,txt(root,'#reportAdditionalMonthly'),bx+CW-48,ry+31,{size:18,weight:850,color:isGap?C.amberInk:'#075f58',align:'right'});
     P().wrappedText(ctx,txt(root,'#reportActionNarrative'),bx,ry+69,CW-24,{size:8.9,lineHeight:12.6,weight:400,color:C.muted,maxLines:2});
@@ -103,7 +103,7 @@
     P().text(ctx,'Goal-date comparison',M,y,{size:16,weight:850,color:C.ink});hline(ctx,M,M+CW,y+14,'#c8d0d6',1);
     const top=y+23,headerH=44,rowH=36,noteH=50;const widths=[112,202,205,199];const xs=[M,M+112,M+314,M+519];
     ctx.fillStyle='#f3f7f9';ctx.fillRect(M,top,CW,headerH);ctx.fillStyle='#eaf5f3';ctx.fillRect(xs[3],top,widths[3],headerH);
-    const headers=[['GOAL TIMING',''],['GOAL COST','(future money at that date)'],['MONTHLY INVESTMENT REQUIRED','(from now)'],['PROJECTED FUNDING','(from current plan before any increase)']];
+    const headers=[['GOAL TIMING',''],['GOAL COST','(future money at that date)'],['CONTRIBUTION REQUIRED','(from now, selected frequency)'],['PROJECTED FUNDING','(from current plan before any increase)']];
     headers.forEach((h,i)=>{const x=xs[i],w=widths[i],color=i===3?C.tealDark:'#40566e';P().text(ctx,h[0],i===0?x+7:x+w/2,top+18,{size:8.4,weight:850,color,align:i===0?'left':'center'});if(h[1])P().wrappedText(ctx,h[1],i===0?x+7:x+w/2,top+32,w-14,{size:7.3,lineHeight:8.5,weight:650,color,align:i===0?'left':'center',maxLines:2});});
     let yy=top+headerH;const rows=scenarioRows(root);rows.forEach(r=>{if(r.selected){ctx.fillStyle=C.selected;ctx.fillRect(M,yy,CW,rowH);ctx.fillStyle=C.selected2;ctx.fillRect(xs[3],yy,widths[3],rowH);ctx.fillStyle=C.teal;ctx.fillRect(M,yy,4,rowH);}else{ctx.fillStyle='#f5fbfa';ctx.fillRect(xs[3],yy,widths[3],rowH);}hline(ctx,M,M+CW,yy+rowH,C.line,1);r.values.forEach((v,i)=>{P().wrappedText(ctx,v,i===0?xs[i]+9:xs[i]+widths[i]/2,yy+22,widths[i]-14,{size:9.4,lineHeight:11,weight:r.selected?850:700,color:C.ink,align:i===0?'left':'center',maxLines:2});});yy+=rowH;});
     ctx.fillStyle=C.note;ctx.fillRect(M,yy+10,CW,noteH);ctx.fillStyle=C.teal;ctx.fillRect(M,yy+10,3,noteH);P().wrappedText(ctx,txt(root,'#reportScenarioNote'),M+14,yy+28,CW-28,{size:8.8,lineHeight:12,weight:400,color:'#344b62',maxLines:3});return yy+10+noteH;
@@ -124,22 +124,22 @@
     return S().guidePage({
       reportTitle:'Goal Planning Report',
       preparedFrom:'Carrowmont Goal Planner',
-      howToRead:'Start with the estimated future goal cost and the projected value of the current plan. Then review the funding gap, the modelled monthly investment required and the alternative scenarios for reaching the same goal.',
+      howToRead:'Start with the estimated future goal cost and the projected value of the current plan. Then review the funding gap, the recurring contribution required at the selected frequency and the alternative scenarios for reaching the same goal.',
       methodology:[
         ['Future goal cost','The amount entered today is grown using the selected inflation or price-growth assumption. If a future target is entered directly, that amount is used instead.'],
-        ['Current-plan projection','Existing savings, current monthly contributions and any entered future lump sum are projected using the selected investment-return assumption.'],
+        ['Current-plan projection','Existing savings, recurring contributions at the selected savings / contribution frequency and any entered future one-time investment are projected using the selected investment-return assumption.'],
         ['Funding gap','The difference between the modelled future goal cost and the projected value of the current plan at the selected goal date.'],
-        ['Required monthly investment','The modelled starting monthly contribution from now that would reach the selected goal date under the entered assumptions.'],
-        ['Alternative lump sum','An illustrative additional amount today that may close the same modelled gap under the selected investment-return assumption.']
+        ['Required contribution','The modelled recurring contribution at the selected savings / contribution frequency from now that would reach the selected goal date under the entered assumptions.'],
+        ['Alternative one-time investment','An illustrative one-time amount today that may close the same modelled gap under the selected investment-return assumption.']
       ],
       terminology:[
         ['Future goal cost','The nominal amount estimated to be needed at the goal date.'],
-        ['Projected current plan','The modelled future value of existing savings plus the contributions and lump sums entered.'],
-        ['Projected funding','The proportion of the future goal cost covered by the current plan before increasing the monthly contribution.'],
+        ['Projected current plan','The modelled future value of existing savings plus the contributions and one-time investments entered.'],
+        ['Projected funding','The proportion of the future goal cost covered by the current plan before increasing the recurring contribution.'],
         ['Funding gap','The amount by which the projected current plan falls short of the modelled goal cost.'],
-        ['Goal-date comparison','Alternative goal dates shown with their corresponding future cost, monthly investment requirement and projected funding.']
+        ['Goal-date comparison','Alternative goal dates shown with their corresponding future cost, recurring contribution requirement and projected funding.']
       ],
-      assumptions:'Inflation and investment returns are constant modelling assumptions. Country and currency selection control formatting and do not perform foreign-exchange conversion.',
+      assumptions:'Inflation and investment returns are constant modelling assumptions. Pay frequency is informational unless the user links it to savings. Savings / contribution frequency controls contribution timing. Country and currency selection control formatting and do not perform foreign-exchange conversion.',
       disclaimer:'This report is an educational planning illustration based entirely on the information and assumptions entered. It does not predict inflation, investment returns, taxes, fees or future prices and is not individualized investment, financial, tax, legal, accounting or insurance advice. Actual outcomes can differ materially.',
       methodologyMeta:methodLabel,
       methodologyUrl:methodUrl,
