@@ -15,7 +15,7 @@
   <meta property="og:url" content="https://carrowmont.com/goal-planner/" />
   <meta name="twitter:card" content="summary" />
   <meta name="theme-color" content="#0e827a" />
-  <link rel="stylesheet" href="styles.css?v=20260922.5" />
+  <link rel="stylesheet" href="styles.css?v=20260927.1" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Carrowmont Goal Planner","url":"https://carrowmont.com/goal-planner/","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"An educational goal-planning calculator for modelling future goal costs, savings progress and recurring funding needs."}</script>
 </head>
 <body>
@@ -189,7 +189,15 @@
 </section>
 </main>
 
-<footer class="site-footer"><div class="container footer-grid"><div><strong>CARROWMONT</strong><p>Financial planning tools and educational resources for clearer financial decisions.</p></div><div><strong>Tools</strong><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/#tools">All tools</a></div><div><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div><div><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></div><div class="container footer-bottom"><span>© 2026 Carrowmont</span><span>Illustrative estimates, not financial advice.</span></div></footer>
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand-block"><a class="footer-wordmark" href="/">CARROWMONT</a><strong class="footer-product-name">Goal Planner</strong><p>Choose what you are planning for, estimate what it may cost in the future, and see how your current savings plan compares.</p><span class="footer-small">Educational planning tool &middot; Carrowmont</span></div>
+    <div class="footer-col"><strong>Tools</strong><a class="footer-investment-link" href="/sip-calculator/">SIP Calculator</a><a href="/retirement-calculator/">Retirement Planner</a><a href="/inflation-calculator/">Inflation Calculator</a><a href="/goal-planner/">Goal Planner</a><a href="/financial-independence/">Financial Independence</a><a href="/#tools">All tools</a></div>
+    <div class="footer-col"><strong>Carrowmont</strong><a href="/learn.html">Learn</a><a href="/about.html">About</a><a href="/methodology.html">Methodology</a><a href="/contact.html">Contact</a></div>
+    <div class="footer-col"><strong>Legal</strong><a href="/disclaimer.html">Disclaimer</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
+  </div>
+  <div class="container footer-bottom"><span>&copy; 2026 Carrowmont &middot; <span class="footer-product-bottom">Goal Planner</span></span><span>Illustrative estimates, not financial advice.</span></div>
+</footer>
 
 <section id="printReport" class="print-report report-section" aria-label="Carrowmont goal planning report">
   <div class="report-shell">
@@ -312,5 +320,19 @@
 <script src="goal-pdf-renderer.js?v=20260926.1"></script>
 <script src="app.js?v=20260926.1"></script>
 <script src="analytics.js?v=1.0.1" data-carrowmont-tool="goal_planner" data-track-tool-open="true"></script>
+
+<script>
+(function(){
+  var L=window.CarrowmontLocale; if(!L) return;
+  function syncFooterInvestmentName(){
+    var india=L.getRegion&&L.getRegion()==='IN';
+    var label=india?'SIP Calculator':'Recurring Investment Calculator';
+    document.querySelectorAll('.footer-investment-link').forEach(function(el){el.textContent=label;});
+    document.querySelectorAll('.footer-investment-product-name,.footer-current-product').forEach(function(el){el.textContent=label;});
+  }
+  syncFooterInvestmentName();
+  window.addEventListener('carrowmont:localechange',syncFooterInvestmentName);
+})();
+</script>
 </body>
 </html>
