@@ -68,7 +68,7 @@
       return a.label.localeCompare(b.label,'en',{sensitivity:'base'});
     });
     els.regionSelect.innerHTML=regionEntries.map(([c,p])=>`<option value="${c}">${p.label}</option>`).join('');
-    els.currencySelect.innerHTML=Object.entries(L.currencies).map(([c,p])=>`<option value="${c}">${c} — ${p.label}</option>`).join('');
+    els.currencySelect.innerHTML=Object.entries(L.currencies).map(([c,p])=>`<option value="${c}">${c} · ${p.label}</option>`).join('');
     els.regionSelect.value=pendingRegion;els.currencySelect.value=pendingCurrency;updateLocaleSummary();
   }
   function updateLocaleSummary(){els.localeCurrent.textContent=`${L.getProfile().label} · ${L.getCurrency()}`;document.querySelectorAll('.currency-prefix').forEach(e=>e.textContent=L.currencySymbol());}
